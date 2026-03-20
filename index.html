@@ -1165,6 +1165,24 @@ function quickShuffle(arr) {
   return a;
 }
 
+function preloadThumbnails(videoList) {
+  return new Promise((resolve) => {
+    let loaded = 0;
+    const total = videoList.length;
+    if (total === 0) { resolve(); return; }
+    videoList.forEach(v => {
+      const img = new Image();
+      img.onload = img.onerror = () => {
+        loaded++;
+        if (loaded >= total) resolve();
+      };
+      img.src = 'https://img.youtube.com/vi/' + v.id + '/mqdefault.jpg';
+    });
+    // Safety timeout — don't wait forever
+    setTimeout(resolve, 3000);
+  });
+}
+
 function slotMachineShuffle() {
   isShuffling = true;
   document.body.classList.add('shuffle-active');
@@ -1173,16 +1191,25 @@ function slotMachineShuffle() {
   // Generate the final shuffled result
   shuffledVideos = quickShuffle(videos);
 
-  // Schedule of spins: [delay from start in ms, duration of spin animation]
-  // Starts fast, gets progressively slower — like a slot machine winding down
+  // Preload all thumbnails before starting animation
+  preloadThumbnails(videos).then(() => startSlotAnimation(grid));}
+
+function startSlotAnimation(grid) {
+
+  // Build a pool of pre-cached thumbnail URLs for instant swapping
+  const thumbCache = {};
+  videos.forEach(v => {
+    thumbCache[v.id] = 'https://img.youtube.com/vi/' + v.id + '/mqdefault.jpg';
+  });
+
+  // Schedule of spins — starts fast, exponentially slows like a slot machine
   const ticks = [];
   let t = 0;
-  let interval = 80;  // start very fast
+  let interval = 80;
   const totalDuration = 7000;
 
   while (t < totalDuration - 600) {
     ticks.push(t);
-    // Exponential slowdown
     interval = interval * 1.18;
     t += interval;
   }
@@ -1191,10 +1218,8 @@ function slotMachineShuffle() {
 
   ticks.forEach((time, idx) => {
     setTimeout(() => {
-      // For each tick, show a random arrangement
       const tempShuffle = idx === ticks.length - 1 ? shuffledVideos : quickShuffle(videos);
-      const source = tempShuffle;
-      const filtered = source.filter(v => {
+      const filtered = tempShuffle.filter(v => {
         if (activeTags.size > 0) {
           const vTags = getVideoTags(v);
           if (!vTags.some(t => activeTags.has(t))) return false;
@@ -1207,7 +1232,6 @@ function slotMachineShuffle() {
         return true;
       });
 
-      // Update just the visible card contents (swap thumbnails/titles in place)
       const cards = visibleCards();
       const limit = Math.min(cards.length, filtered.length);
 
@@ -1218,11 +1242,12 @@ function slotMachineShuffle() {
         const titleEl = card.querySelector('.card-title');
         const channelEl = card.querySelector('.card-channel');
 
-        if (img) img.src = 'https://img.youtube.com/vi/' + v.id + '/mqdefault.jpg';
+        // Swap thumbnail from cache — should be instant
+        if (img) img.src = thumbCache[v.id];
         if (titleEl) titleEl.textContent = v.title;
         if (channelEl) channelEl.textContent = v.channel;
 
-        // Quick vertical jolt on each tick
+        // Vertical jolt
         card.style.transition = 'transform 0.08s ease-out';
         card.style.transform = 'translateY(-6px)';
         setTimeout(() => {
@@ -1232,22 +1257,20 @@ function slotMachineShuffle() {
     }, time);
   });
 
-  // Final settle: full re-render with landing animation
+  // Final settle with landing bounce
   const finalTime = ticks[ticks.length - 1] + 300;
   setTimeout(() => {
     render();
 
-    // Apply staggered landing bounce to visible cards
     const finalCards = grid.querySelectorAll('.video-card');
     finalCards.forEach((card, i) => {
       card.style.animation = 'none';
-      card.offsetHeight; // force reflow
+      card.offsetHeight;
       const stagger = Math.min(i * 30, 1500);
       card.style.animationDelay = stagger + 'ms';
       card.classList.add('shuffle-landed');
     });
 
-    // Cleanup
     setTimeout(() => {
       finalCards.forEach(card => {
         card.classList.remove('shuffle-landed');
