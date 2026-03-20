@@ -163,6 +163,12 @@ body::after {
   background: var(--bg-card);
 }
 
+#shuffleBtn.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
 .tag-bar {
   display: flex;
   gap: 6px;
@@ -651,6 +657,9 @@ body::after {
       <input type="text" class="search-input" placeholder="Search titles, channels..." id="searchInput" autocomplete="off">
     </div>
     <div class="view-controls">
+      <button class="view-btn" id="shuffleBtn" title="Shuffle videos">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+      </button>
       <button class="view-btn active" id="gridViewBtn" title="Grid view" onclick="setView('grid')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
       </button>
@@ -790,6 +799,8 @@ let currentView = 'grid';
 let tagOverrides = {};
 let editingVideoId = null;
 let editingTags = new Set();
+let isShuffled = false;
+let shuffledVideos = [];
 
 function getVideoId(url) {
   const m = url.match(/[?&]v=([^&]+)/);
@@ -862,6 +873,21 @@ function init() {
       closeTagEditor();
     }
   });
+
+  document.getElementById('shuffleBtn').addEventListener('click', () => {
+    isShuffled = !isShuffled;
+    document.getElementById('shuffleBtn').classList.toggle('active', isShuffled);
+    if (isShuffled) {
+      // Fisher-Yates shuffle
+      shuffledVideos = [...videos];
+      for (let i = shuffledVideos.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledVideos[i], shuffledVideos[j]] = [shuffledVideos[j], shuffledVideos[i]];
+      }
+    }
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 }
 
 function buildTagBar() {
@@ -924,7 +950,8 @@ function updateTagPills() {
 }
 
 function getFilteredVideos() {
-  return videos.filter(v => {
+  const source = isShuffled ? shuffledVideos : videos;
+  return source.filter(v => {
     // Tag filter
     if (activeTags.size > 0) {
       const vTags = getVideoTags(v);
