@@ -623,6 +623,38 @@ body::after {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Slot machine shuffle animations */
+@keyframes slotSpin {
+  0% { transform: translateY(0); opacity: 1; }
+  45% { transform: translateY(-100%); opacity: 0; }
+  55% { transform: translateY(100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slotLand {
+  0% { transform: translateY(40px) scale(0.95); opacity: 0; }
+  60% { transform: translateY(-4px) scale(1.01); opacity: 1; }
+  80% { transform: translateY(2px) scale(0.995); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.shuffling .video-card {
+  animation: slotSpin 0.25s ease-in-out !important;
+}
+
+.shuffle-landed {
+  animation: slotLand 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+}
+
+.shuffle-active #shuffleBtn {
+  animation: btnPulse 0.6s ease-in-out infinite;
+}
+
+@keyframes btnPulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-dim); }
+  50% { box-shadow: 0 0 12px 4px var(--accent-dim); }
+}
+
 .video-card {
   animation: cardIn 0.3s ease forwards;
   opacity: 0;
@@ -800,6 +832,7 @@ let tagOverrides = {};
 let editingVideoId = null;
 let editingTags = new Set();
 let isShuffled = false;
+let isShuffling = false;
 let shuffledVideos = [];
 
 function getVideoId(url) {
@@ -875,18 +908,17 @@ function init() {
   });
 
   document.getElementById('shuffleBtn').addEventListener('click', () => {
+    if (isShuffling) return; // prevent double-click during animation
     isShuffled = !isShuffled;
     document.getElementById('shuffleBtn').classList.toggle('active', isShuffled);
+
     if (isShuffled) {
-      // Fisher-Yates shuffle
-      shuffledVideos = [...videos];
-      for (let i = shuffledVideos.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledVideos[i], shuffledVideos[j]] = [shuffledVideos[j], shuffledVideos[i]];
-      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => slotMachineShuffle(), 300);
+    } else {
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    render();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 }
 
@@ -1122,6 +1154,110 @@ function saveTagEdits() {
   closeTagEditor();
   buildTagBar();
   render();
+}
+
+function quickShuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function slotMachineShuffle() {
+  isShuffling = true;
+  document.body.classList.add('shuffle-active');
+  const grid = document.getElementById('videoGrid');
+
+  // Generate the final shuffled result
+  shuffledVideos = quickShuffle(videos);
+
+  // Schedule of spins: [delay from start in ms, duration of spin animation]
+  // Starts fast, gets progressively slower — like a slot machine winding down
+  const ticks = [];
+  let t = 0;
+  let interval = 80;  // start very fast
+  const totalDuration = 7000;
+
+  while (t < totalDuration - 600) {
+    ticks.push(t);
+    // Exponential slowdown
+    interval = interval * 1.18;
+    t += interval;
+  }
+
+  const visibleCards = () => grid.querySelectorAll('.video-card');
+
+  ticks.forEach((time, idx) => {
+    setTimeout(() => {
+      // For each tick, show a random arrangement
+      const tempShuffle = idx === ticks.length - 1 ? shuffledVideos : quickShuffle(videos);
+      const source = tempShuffle;
+      const filtered = source.filter(v => {
+        if (activeTags.size > 0) {
+          const vTags = getVideoTags(v);
+          if (!vTags.some(t => activeTags.has(t))) return false;
+        }
+        if (searchQuery) {
+          const haystack = (v.title + ' ' + v.channel).toLowerCase();
+          const terms = searchQuery.split(/\s+/);
+          if (!terms.every(term => haystack.includes(term))) return false;
+        }
+        return true;
+      });
+
+      // Update just the visible card contents (swap thumbnails/titles in place)
+      const cards = visibleCards();
+      const limit = Math.min(cards.length, filtered.length);
+
+      for (let i = 0; i < limit; i++) {
+        const v = filtered[i];
+        const card = cards[i];
+        const img = card.querySelector('.thumb-wrap img');
+        const titleEl = card.querySelector('.card-title');
+        const channelEl = card.querySelector('.card-channel');
+
+        if (img) img.src = 'https://img.youtube.com/vi/' + v.id + '/mqdefault.jpg';
+        if (titleEl) titleEl.textContent = v.title;
+        if (channelEl) channelEl.textContent = v.channel;
+
+        // Quick vertical jolt on each tick
+        card.style.transition = 'transform 0.08s ease-out';
+        card.style.transform = 'translateY(-6px)';
+        setTimeout(() => {
+          card.style.transform = 'translateY(0)';
+        }, 60);
+      }
+    }, time);
+  });
+
+  // Final settle: full re-render with landing animation
+  const finalTime = ticks[ticks.length - 1] + 300;
+  setTimeout(() => {
+    render();
+
+    // Apply staggered landing bounce to visible cards
+    const finalCards = grid.querySelectorAll('.video-card');
+    finalCards.forEach((card, i) => {
+      card.style.animation = 'none';
+      card.offsetHeight; // force reflow
+      const stagger = Math.min(i * 30, 1500);
+      card.style.animationDelay = stagger + 'ms';
+      card.classList.add('shuffle-landed');
+    });
+
+    // Cleanup
+    setTimeout(() => {
+      finalCards.forEach(card => {
+        card.classList.remove('shuffle-landed');
+        card.style.animationDelay = '';
+        card.style.animation = '';
+      });
+      document.body.classList.remove('shuffle-active');
+      isShuffling = false;
+    }, 2000);
+  }, finalTime);
 }
 
 function setView(view) {
