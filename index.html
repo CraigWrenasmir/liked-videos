@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liked — Video Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-primary: #0a0a0a;
+  --bg-card: #141414;
+  --bg-card-hover: #1a1a1a;
+  --bg-surface: #111111;
+  --border-subtle: #222222;
+  --border-hover: #333333;
+  --text-primary: #e8e6e3;
+  --text-secondary: #8a8785;
+  --text-muted: #555350;
+  --accent: #c8a97e;
+  --accent-dim: #c8a97e22;
+  --tag-music: #d4775e;
+  --tag-documentary: #5e8ed4;
+  --tag-writing: #a67ec8;
+  --tag-art: #c8567e;
+  --tag-gaming: #5ec87e;
+  --tag-tech: #5ec8c8;
+  --tag-comedy: #d4c45e;
+  --tag-education: #5e7ed4;
+  --tag-local: #d4a05e;
+  --tag-podcast: #8a5ec8;
+  --tag-film: #c8785e;
+  --tag-news: #7e8a9e;
+  --tag-kids: #5ed4a0;
+  --tag-anime: #d45ea0;
+  --tag-mix: #7ec8a0;
+  --tag-own: #c8b87e;
+  --tag-uncategorized: #555350;
+  --radius: 8px;
+  --radius-lg: 14px;
+}
+
+html { font-size: 15px; }
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Grain overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+  z-index: 9999;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0 clamp(16px, 3vw, 48px);
+}
+
+.header-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 24px 0 16px;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.logo {
+  font-family: 'Instrument Serif', serif;
+  font-size: 2rem;
+  font-style: italic;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.logo span {
+  font-style: normal;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  margin-left: 12px;
+  letter-spacing: 0.05em;
+}
+
+.search-wrapper {
+  flex: 1;
+  max-width: 480px;
+  min-width: 200px;
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 40px;
+  padding: 10px 20px 10px 44px;
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input::placeholder { color: var(--text-muted); }
+
+.search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.view-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.view-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+}
+
+.view-btn:hover, .view-btn.active {
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+  background: var(--bg-card);
+}
+
+.tag-bar {
+  display: flex;
+  gap: 6px;
+  padding: 12px 0 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  mask-image: linear-gradient(to right, black 95%, transparent);
+  -webkit-mask-image: linear-gradient(to right, black 95%, transparent);
+}
+
+.tag-bar::-webkit-scrollbar { display: none; }
+
+.tag-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 40px;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  user-select: none;
+  letter-spacing: 0.01em;
+}
+
+.tag-pill:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.tag-pill.active {
+  background: var(--tag-color, var(--text-muted));
+  border-color: transparent;
+  color: #0a0a0a;
+  font-weight: 500;
+}
+
+.tag-pill .count {
+  font-size: 0.68rem;
+  opacity: 0.6;
+  font-weight: 300;
+}
+
+.tag-pill.active .count { opacity: 0.8; }
+
+.main-content {
+  padding: 24px clamp(16px, 3vw, 48px) 80px;
+}
+
+.results-info {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  font-weight: 300;
+  letter-spacing: 0.03em;
+}
+
+.results-info strong {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.video-grid.list-view {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.video-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+
+.video-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+.video-card .thumb-wrap {
+  position: relative;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  background: #0d0d0d;
+}
+
+.video-card .thumb-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease, opacity 0.3s;
+}
+
+.video-card:hover .thumb-wrap img {
+  transform: scale(1.04);
+}
+
+.play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.1);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.video-card:hover .play-overlay { opacity: 1; }
+
+.play-btn-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(0,0,0,0.75);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.play-btn-icon svg {
+  fill: white;
+  width: 20px;
+  height: 20px;
+  margin-left: 2px;
+}
+
+.card-info {
+  padding: 12px 14px 14px;
+}
+
+.card-title {
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.35;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--text-primary);
+}
+
+.card-channel {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  font-weight: 300;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.card-tag {
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--tag-color, #333);
+  color: #0a0a0a;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.edit-tags-btn {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  transition: all 0.15s;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.edit-tags-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* List view cards */
+.list-view .video-card {
+  display: flex;
+  flex-direction: row;
+  border-radius: var(--radius);
+}
+
+.list-view .thumb-wrap {
+  width: 200px;
+  min-width: 200px;
+  aspect-ratio: 16/9;
+}
+
+.list-view .card-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  padding: 10px 16px;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(12px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal-content {
+  width: 90vw;
+  max-width: 960px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transform: scale(0.95) translateY(10px);
+  transition: transform 0.25s ease;
+}
+
+.modal-overlay.open .modal-content {
+  transform: scale(1) translateY(0);
+}
+
+.modal-video {
+  aspect-ratio: 16/9;
+  width: 100%;
+  background: black;
+}
+
+.modal-video iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.modal-info {
+  padding: 20px 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.modal-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.3rem;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+.modal-channel {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  font-weight: 300;
+}
+
+.modal-close {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.modal-close:hover {
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
+
+/* Tag editor modal */
+.tag-editor-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.tag-editor-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.tag-editor {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  width: 90vw;
+  max-width: 440px;
+}
+
+.tag-editor h3 {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.2rem;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.tag-editor .te-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  font-weight: 300;
+}
+
+.tag-editor .te-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.tag-editor .te-tag {
+  padding: 6px 14px;
+  border-radius: 40px;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tag-editor .te-tag:hover {
+  border-color: var(--border-hover);
+}
+
+.tag-editor .te-tag.selected {
+  background: var(--tag-color, var(--text-muted));
+  border-color: transparent;
+  color: #0a0a0a;
+  font-weight: 500;
+}
+
+.tag-editor .te-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.te-btn {
+  padding: 8px 20px;
+  border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.te-btn-cancel {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.te-btn-cancel:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.te-btn-save {
+  background: var(--accent);
+  border: 1px solid transparent;
+  color: #0a0a0a;
+  font-weight: 500;
+}
+
+.te-btn-save:hover {
+  background: #d4b88e;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+
+/* Loading skeleton */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-card) 25%, #1a1a1a 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius);
+}
+
+/* Fade-in animation for cards */
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.video-card {
+  animation: cardIn 0.3s ease forwards;
+  opacity: 0;
+}
+
+.thumb-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: #1a1a1a;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .video-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .header-top { padding: 16px 0 12px; }
+  .logo { font-size: 1.5rem; }
+  .list-view .thumb-wrap { width: 140px; min-width: 140px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="header-top">
+    <div class="logo">Liked<span id="resultCount"></span></div>
+    <div class="search-wrapper">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" class="search-input" placeholder="Search titles, channels..." id="searchInput" autocomplete="off">
+    </div>
+    <div class="view-controls">
+      <button class="view-btn active" id="gridViewBtn" title="Grid view" onclick="setView('grid')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      </button>
+      <button class="view-btn" id="listViewBtn" title="List view" onclick="setView('list')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="4" width="18" height="4" rx="1.5"/><rect x="3" y="10" width="18" height="4" rx="1.5"/><rect x="3" y="16" width="18" height="4" rx="1.5"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="tag-bar" id="tagBar"></div>
+</div>
+
+<main class="main-content">
+  <div class="results-info" id="resultsInfo"></div>
+  <div class="video-grid" id="videoGrid"></div>
+</main>
+
+<!-- Video player modal -->
+<div class="modal-overlay" id="playerModal" onclick="if(event.target===this)closePlayer()">
+  <div class="modal-content">
+    <div class="modal-video" id="modalVideo"></div>
+    <div class="modal-info">
+      <div>
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-channel" id="modalChannel"></div>
+      </div>
+      <button class="modal-close" onclick="closePlayer()">&times;</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tag editor modal -->
+<div class="tag-editor-overlay" id="tagEditorOverlay" onclick="if(event.target===this)closeTagEditor()">
+  <div class="tag-editor">
+    <h3>Edit Tags</h3>
+    <div class="te-subtitle" id="teSubtitle"></div>
+    <div class="te-tags" id="teTags"></div>
+    <div class="te-actions">
+      <button class="te-btn te-btn-cancel" onclick="closeTagEditor()">Cancel</button>
+      <button class="te-btn te-btn-save" onclick="saveTagEdits()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const LIKED_VIDEOS = [{"title": "Beach 'fight club' in Newcastle, Australia c.1950", "url": "https://www.youtube.com/watch?v=yhizSI8f7XU", "channel": "NFSA Film Australia"}, {"title": "Will Self talks about J. G. Ballard in the age of the COVID19 pandemic -Radio 4 Today 14/04/2020", "url": "https://www.youtube.com/watch?v=DX1eBB6Ytts", "channel": "airingcupboard"}, {"title": "K7 Museum", "url": "https://www.youtube.com/watch?v=9fztYA_UWxA", "channel": "Squarepusher"}, {"title": "\"The Conversation\" Mike Leigh / Will Self Interview - Art Zone", "url": "https://www.youtube.com/watch?v=mi_WU4IYKRE", "channel": "PointlessEndeavor"}, {"title": "Will Self at the poetry shack", "url": "https://www.youtube.com/watch?v=vSkWP3y7nWo", "channel": "The Poetry Shack"}, {"title": "Max Cooper - A Sense Of Getting Closer (Official video by Conner Griffith)", "url": "https://www.youtube.com/watch?v=4jaHcz3d85w", "channel": "Max Cooper"}, {"title": "The Thinking Of The World Began Pounding In Our Ears The Moment We Hit Shore - Wish You Were", "url": "https://www.youtube.com/watch?v=Fzy2tyF5Cmk", "channel": "stroom tv"}, {"title": "windy puppy.", "url": "https://www.youtube.com/watch?v=K0Vo1mkllMI", "channel": "mocha."}, {"title": "Flying Lotus - 'BIG MAMA' [EP]", "url": "https://www.youtube.com/watch?v=sdPDN1fqb5E", "channel": "Flying Lotus"}, {"title": "Explaining Hamilton in a Crowded Elevator", "url": "https://www.youtube.com/watch?v=psLqaSEa0uM", "channel": "Anything Can Be A Podcast w/ Taylor Cartago"}, {"title": "The Universal Sandpit - New Updates", "url": "https://www.youtube.com/watch?v=lJiqNwZa0i8", "channel": "Craig Smith"}, {"title": "Gorillaz - The Mountain, The Moon Cave and The Sad God", "url": "https://www.youtube.com/watch?v=ucRulNQsuYQ", "channel": "Gorillaz"}, {"title": "Meta-Man: Superhero Of The Future!", "url": "https://www.youtube.com/watch?v=X_pcfC-7B30", "channel": "Superhumans"}, {"title": "エヴァンゲリオン完全新作シリーズ制作始動 初報映像 2026年2月23日発表", "url": "https://www.youtube.com/watch?v=tC_DJWqHXD4", "channel": "株式会社カラー khara inc.official"}, {"title": "Squarepusher - K2 Central (Official Video)", "url": "https://www.youtube.com/watch?v=cAvdRtOdRcM", "channel": "Squarepusher and Warp Records"}, {"title": "K2 Central", "url": "https://www.youtube.com/watch?v=kQe0euPxxlE", "channel": "Squarepusher"}, {"title": "My Favorite Atmospheric Jungle Mixes (Intelligent DnB)", "url": "https://www.youtube.com/watch?v=UHRTQCF7oKw", "channel": "Медиус"}, {"title": "Farewell, Pocket Books", "url": "https://www.youtube.com/watch?v=wFOi7Izeeyo", "channel": "The New York Times"}, {"title": "Playstation 3 Ambient Jungle Mix", "url": "https://www.youtube.com/watch?v=lfO0qjvzBPw", "channel": "Dopo Goto"}, {"title": "rage top 50 of 1997", "url": "https://www.youtube.com/watch?v=iuINvIQeQD8", "channel": "ohnoitisnathan78"}, {"title": "rage top 50 of 1996", "url": "https://www.youtube.com/watch?v=Sbh-2ZRtwBk", "channel": "ohnoitisnathan78"}, {"title": "LEGO Train OnBoard Ride Around The Garden And Over The Pool - Reverse Loop", "url": "https://www.youtube.com/watch?v=CnxZLk5QhNE", "channel": "AFOL & KFOL Bricks"}, {"title": "Wrenasmir - Untitled 2 [video clip]", "url": "https://www.youtube.com/watch?v=jzC1rNgNuqE", "channel": "Craig Smith"}, {"title": "Boards of Canada - A Few Old Tunes", "url": "https://www.youtube.com/watch?v=k-e1EwccwRc", "channel": "Sam"}, {"title": "Hyperreality Is Dead: Baudrillard, the Age of Trump, and 'The Gulf War Did Not Take Place' Revisited", "url": "https://www.youtube.com/watch?v=evzcrlxGk3Q", "channel": "Acid Horizon"}, {"title": "softclub - 90s downtempo / ambient techno + trance / trip hop mix", "url": "https://www.youtube.com/watch?v=owYSGVKNdGE", "channel": "5atu8ion"}, {"title": "POV: you found this cool mixtape at end of the world", "url": "https://www.youtube.com/watch?v=_HY9wyLjRDE", "channel": "Yaman Ege Music"}, {"title": "Wrenasmir: Live at The Oak", "url": "https://www.youtube.com/watch?v=ORbZoLxYZZc", "channel": "Craig Smith"}, {"title": "Prime Minister Mark Carney speaks at World Economic Forum | FULL SPEECH", "url": "https://www.youtube.com/watch?v=5CrL_l8JQtQ", "channel": "CityNews"}, {"title": "Aphex Twin - Girl/Boy Song Live 1996", "url": "https://www.youtube.com/watch?v=7S5PWiVxLYA", "channel": "Zak Ramsey"}, {"title": "The Thinking Game | Full documentary | Tribeca Film Festival official selection", "url": "https://www.youtube.com/watch?v=d95J8yzvjbQ", "channel": "Google DeepMind and 3 more"}, {"title": "The Timeless Beauty of Pre Rendered Graphics", "url": "https://www.youtube.com/watch?v=e3SwbHIPnfo", "channel": "GameTalesHQ"}, {"title": "Boards of Canada \"Olson\" on a 1959 PDP-1 Computer", "url": "https://www.youtube.com/watch?v=wubkrBd3-gg", "channel": "Joe Lynch"}, {"title": "Big Walk - Gameplay Overview", "url": "https://www.youtube.com/watch?v=AXsLvmukUTc", "channel": "Panic"}, {"title": "The Castle", "url": "https://www.youtube.com/watch?v=Aax_zyDG61w", "channel": "judey babey"}, {"title": "Top 7 City Building Games for Android & iOS", "url": "https://www.youtube.com/watch?v=3og1zl2U_Hk", "channel": "Odyssey Gaming"}, {"title": "Soapbox car race with extreme heights", "url": "https://www.youtube.com/watch?v=hs03NP3tljY", "channel": "Car Pal"}, {"title": "ANITO  - TEASER", "url": "https://www.youtube.com/watch?v=Mrcmcy0hjwg", "channel": "Puppeteer Studios"}, {"title": "モーショングラフィックス \"nostalmic\"", "url": "https://www.youtube.com/watch?v=PM0LnzSSsLE", "channel": "isshin"}, {"title": "The Lost Tower", "url": "https://www.youtube.com/watch?v=ecOOR0fETRA", "channel": "Florent Lebrun"}, {"title": "Verdant - Official Announcement Trailer | Wholesome Snack 2025", "url": "https://www.youtube.com/watch?v=LInq5N_VhTY", "channel": "GameTrailers"}, {"title": "Project Bloomwalker - Official Gameplay Trailer", "url": "https://www.youtube.com/watch?v=ZsmRAs0GJEo", "channel": "Xbox"}, {"title": "Rhythm* Pocket!: 「Dorephin Shopping Center」 | Lionclad", "url": "https://www.youtube.com/watch?v=gvtrG92q32Q", "channel": "Azikazin Magic World"}, {"title": "Big Walk - Official Gameplay Trailer | Day of the Devs: Summer Game Fest Edition", "url": "https://www.youtube.com/watch?v=_n7e0hWmTvc", "channel": "GameTrailers"}, {"title": "Inside a Painter's New York Loft that he Moved into in 1967", "url": "https://www.youtube.com/watch?v=_A_u4N08B9U", "channel": "Joshua Charow"}, {"title": "Walking through old neighborhoods in Chongqing, China. Shuitu(水土), Chongqing・4K", "url": "https://www.youtube.com/watch?v=TD50S3SPzwQ", "channel": "Wang's record"}, {"title": "Zlin City: Arch Moderna - Official Announcement Trailer", "url": "https://www.youtube.com/watch?v=NbaxioRA5wA", "channel": "GameTrailers"}, {"title": "1993: Original MORTAL KOMBAT review with Will Self | The Late Show | Retro Gaming | BBC Archive", "url": "https://www.youtube.com/watch?v=SgMPr0UZObY", "channel": "BBC Archive"}, {"title": "It sounds dumb but they really fixed a typo with a human leg", "url": "https://www.youtube.com/watch?v=dUkLYOPRYH4", "channel": "JRH"}, {"title": "Wrenasmir: Ambient Set - Summer 25/26", "url": "https://www.youtube.com/watch?v=3IbPWT5mqxs", "channel": "Craig Smith"}, {"title": "Fabulous Forster Is Holiday Haven.  Australian Colour Diary 26.", "url": "https://www.youtube.com/watch?v=A0yWn8hb78k", "channel": "NFSA Film Australia"}, {"title": "ICBF 25: Ted Geltner: Flagrant, Self-Destructive Gestures - A Biography of Denis Johnson", "url": "https://www.youtube.com/watch?v=lLnkz1n4fUQ", "channel": "Iowa City Public Library | The Library Channel"}, {"title": "Jamie xx - Adidas Arena, Paris - ARTE Concert", "url": "https://www.youtube.com/watch?v=P0GpUQpMBZY", "channel": "ARTE Concert"}, {"title": "Everyone I Love is Alive in the Unlimited Present of the City and its Waters", "url": "https://www.youtube.com/watch?v=X8U_lYJB83s", "channel": "Craig Smith"}, {"title": "Ridin' Newcastle [Atari 2600]", "url": "https://www.youtube.com/watch?v=oYfpPU6TfhI", "channel": "Craig Smith"}, {"title": "China's MOST ABSURD Abandoned MEGA PROJECT  $14 Billion wasted", "url": "https://www.youtube.com/watch?v=TF_3En84hbc", "channel": "Exploring the Unbeaten Path"}, {"title": "Webinar 2 – Systemic Innovation: Policy, Place, and Provision", "url": "https://www.youtube.com/watch?v=ZBJfQnx2Zmo", "channel": "UNESCO IITE"}, {"title": "Big Ideas: Don't get any -- by James Houston", "url": "https://www.youtube.com/watch?v=pmfHHLfbjNQ", "channel": "James Houston"}, {"title": "Sleigh Bells - Infinity Guitars", "url": "https://www.youtube.com/watch?v=LhYYd5adVY4", "channel": "Mom+Pop Music"}, {"title": "Bon Iver - Holocene performed on the Jimmy Fallon Show (full video)", "url": "https://www.youtube.com/watch?v=V6wqyk5fHeA", "channel": "makeyourfaith"}, {"title": "Imogen Heap \"Hide and Seek\" Live On Indie 103", "url": "https://www.youtube.com/watch?v=dHk2lLaDzlM", "channel": "Lakeshore Records"}, {"title": "Joshua Oppenheimer on his movies, Tilda Swinton in \"The End\", the politics of movie making, and more", "url": "https://www.youtube.com/watch?v=QhDsvTaW1wQ", "channel": "Crisis and Critique"}, {"title": "Dave Talks with Late Night Legend Jim Downey | David Letterman", "url": "https://www.youtube.com/watch?v=0dQJdBnCips", "channel": "Letterman"}, {"title": "Wrenasmir   Live @ The Croation Wickham Sports Club (20/04/19)", "url": "https://www.youtube.com/watch?v=YCKX38qHp1g", "channel": "Craig Smith"}, {"title": "Alan Partridge Interviews Noel Gallagher (with Simon Pegg)", "url": "https://www.youtube.com/watch?v=h9RrlXSMkt0", "channel": "Jack"}, {"title": "𝐍𝐨𝐜𝐭𝐮𝐫𝐧𝐚𝐥 𝐂𝐚𝐧𝐨𝐩𝐲 𝟏𝟗𝟖𝟕", "url": "https://www.youtube.com/watch?v=Do3k3yMd1uI", "channel": "Retropical Records"}, {"title": "Pulp: Tiny Desk Concert", "url": "https://www.youtube.com/watch?v=x_KlY-AegeE", "channel": "NPR Music and Pulp"}, {"title": "Squarepusher - Dark Steering | 92.26% Expert+ | Beat Saber", "url": "https://www.youtube.com/watch?v=xC6LY5HrOII", "channel": "OrangeW"}, {"title": "Hooked On Classics - Louis Clark And The Royal Philharmonic Orchestra", "url": "https://www.youtube.com/watch?v=Vj42wRcL6UE", "channel": "BargainBinRecords"}, {"title": "Radiohead - FULL SHOW - live Madrid 2025-11-04 night 1 European Tour complete concert", "url": "https://www.youtube.com/watch?v=ze8ZAlTyEIU", "channel": "Javi Dieguez"}, {"title": "Philip Larkin and John Betjeman - \"Down Cemetery Road\". BBC's Monitor, 1964", "url": "https://www.youtube.com/watch?v=Kwf_b_Rt7Fg", "channel": "Union Jackies - The British Way"}, {"title": "The City | Jamie Lidell | From The Basement", "url": "https://www.youtube.com/watch?v=4Zc2UDmk9RE", "channel": "From The Basement"}, {"title": "Cyberstress!", "url": "https://www.youtube.com/watch?v=DVprerMi5Dg", "channel": "Found Footage Fest"}, {"title": "The Scar in the Desert is Eleven Kilometres Long [Story] - Craig Warren Smith", "url": "https://www.youtube.com/watch?v=_K9xkJja7WE", "channel": "Craig Smith"}, {"title": "Block Cube Games play - Infiniminer", "url": "https://www.youtube.com/watch?v=U5yYDbTO85o", "channel": "Block Cube Games"}, {"title": "Newcastle Earthquake 28 December 1989. Unedited Film of Actual Earthquake. Hamilton Bus Depot.", "url": "https://www.youtube.com/watch?v=USWWIf3uG4E", "channel": "UoNCC"}, {"title": "Reliquary Game Reviews: Infiniminer", "url": "https://www.youtube.com/watch?v=JlSIbbAu088", "channel": "DaCo Video"}, {"title": "The Lemonheads - Mrs. Robinson (Official Video)", "url": "https://www.youtube.com/watch?v=2C0sANgB9Qk", "channel": "thelemonheads and firerecords"}, {"title": "Selected Piano and Piano Adjacent Works - Wrenasmir", "url": "https://www.youtube.com/watch?v=9kbDGoyPZwM", "channel": "Craig Smith"}, {"title": "Master/Class: László Krasznahorkai and Colm Tóibín", "url": "https://www.youtube.com/watch?v=r6LPgvxA5Fs", "channel": "PEN America"}, {"title": "László Krasznahorkai's 2015 International Booker Prize Winning Speech | The Booker Prize", "url": "https://www.youtube.com/watch?v=zblzXy9bO_E", "channel": "The Booker Prizes"}, {"title": "Shocking Finds Inside This ABANDONED 5-STAR CASINO HOTEL", "url": "https://www.youtube.com/watch?v=ZmnMZtILwDs", "channel": "Exploring the Unbeaten Path"}, {"title": "Panasonic Quasar “Glider” Commercial (1981)", "url": "https://www.youtube.com/watch?v=UOXbZjppwko", "channel": "astrodome1994"}, {"title": "Reflection of Evil (2002) Full Movie, High Quality", "url": "https://www.youtube.com/watch?v=Wd7Mx8HLBP0", "channel": "Muroc _"}, {"title": "AE_LYON_070524", "url": "https://www.youtube.com/watch?v=bMzJpIYb5BM", "channel": "icari"}, {"title": "Diane Keaton Wins Best Actress Oscar: 1978 Oscars", "url": "https://www.youtube.com/watch?v=oQKuNHhX8Js", "channel": "Oscars"}, {"title": "Woody Allen presented Diane Keaton w. the AFI award", "url": "https://www.youtube.com/watch?v=S8AAYTDf87Y", "channel": "Boston Fern"}, {"title": "The Master and V | Paul Thomas Anderson and Thomas Pynchon", "url": "https://www.youtube.com/watch?v=XHTwK5MpGZw", "channel": "Daniel Backer Author"}, {"title": "The Smashing Pumpkins [Disarm Live on MTV Most Wanted with Ray Cokes 1993]", "url": "https://www.youtube.com/watch?v=7M9os0a12fY", "channel": "The Lost Tones"}, {"title": "Untitled 4 [Live from Room 4031] - Wrenasmir", "url": "https://www.youtube.com/watch?v=eWOAMFir7CQ", "channel": "Craig Smith"}, {"title": "Untitled 3 [Live from Room 4031] - Wrenasmir", "url": "https://www.youtube.com/watch?v=_6ifS0k8mWE", "channel": "Craig Smith"}, {"title": "Live from Room 4031 (Grand Chancellor Hotel) - Wrenasmir", "url": "https://www.youtube.com/watch?v=cyIj3bJdlxw", "channel": "Craig Smith"}, {"title": "Green Screen Iron Man Mark III Suit Up with improved HUD requested by Alex AB Productions", "url": "https://www.youtube.com/watch?v=Btg88uC_QhI", "channel": "Green Screen Magic"}, {"title": "Futuristic HUD Sound Design | Blake Sanchez", "url": "https://www.youtube.com/watch?v=J-FkR8L2X5E", "channel": "Blake Sanchez"}, {"title": "Iron Man HELMET HUD Green Screen Effect || [Download Link Below]", "url": "https://www.youtube.com/watch?v=cwrVwTLfan8", "channel": "VFX GURU"}, {"title": "Targer Lock Element Green Screen", "url": "https://www.youtube.com/watch?v=B6AOk70XDN4", "channel": "Green Screen"}, {"title": "Targer Finder Element Green Screen", "url": "https://www.youtube.com/watch?v=9zORm99iKPM", "channel": "Green Screen"}, {"title": "green screen alien invasion attack effect", "url": "https://www.youtube.com/watch?v=z3Glb5MRAC0", "channel": "donald bulley"}, {"title": "Sean Booth (Autechre) on neurodivergence", "url": "https://www.youtube.com/watch?v=ZeL45bDUpG8", "channel": "Ramon"}, {"title": "Marble Madness NES speedrun in 2:46 by Arcus", "url": "https://www.youtube.com/watch?v=ClFmKfKcFF8", "channel": "Arcus"}, {"title": "Jimmy Kimmel is Back!", "url": "https://www.youtube.com/watch?v=c1tjh_ZO_tY", "channel": "Jimmy Kimmel Live"}, {"title": "Steamed Hams but it's a Critically Acclaimed Feature Film", "url": "https://www.youtube.com/watch?v=pk-Oq8iYtVA", "channel": "Tyrone Deise"}, {"title": "focus mix with Japanese archer (Kyudo) l ShioriyBradshaw l login.jp l techno chill ambient focus", "url": "https://www.youtube.com/watch?v=ji6ELM1B-C4", "channel": "Login.jp_"}, {"title": "Robert Frost interview + poetry reading (1952)", "url": "https://www.youtube.com/watch?v=2qwCEnkb2_E", "channel": "Manufacturing Intellect"}, {"title": "Craig Finn - Crumbs (Official Visualizer)", "url": "https://www.youtube.com/watch?v=K4-vEvmuuZI", "channel": "Craig Finn"}, {"title": "Tim and Eric Nite Live! Full Series", "url": "https://www.youtube.com/watch?v=mtMPRrdP9Yk", "channel": "Tim Heidecker's Stalker"}, {"title": "Using AI to Support Strengths-Based Play and Learning for Neurodivergent Students - Craig Smith.", "url": "https://www.youtube.com/watch?v=LxgfH4-5axY", "channel": "Craig Smith"}, {"title": "David Letterman on the Future of Free Speech | The Atlantic Festival 2025", "url": "https://www.youtube.com/watch?v=mpAHFlZqIKw", "channel": "The Atlantic"}, {"title": "Pulp Fiction (1994): Final Confrontation Full Scene", "url": "https://www.youtube.com/watch?v=G2kTEB8Lmnc", "channel": "Binge Society"}, {"title": "Noam Chomsky full length interview: Who rules the world now?", "url": "https://www.youtube.com/watch?v=P2lsEVlqts0", "channel": "Channel 4 News"}, {"title": "‘Roads’ 2025 – Together For Palestine", "url": "https://www.youtube.com/watch?v=g2AmYPyXoUQ", "channel": "Portishead"}, {"title": "Adagio [Cataract Gorge] - Wrenasmir", "url": "https://www.youtube.com/watch?v=YdRddPGmKAQ", "channel": "Craig Smith"}, {"title": "Firing Line with William F. Buckley Jr.: Vietnam and the Intellectuals", "url": "https://www.youtube.com/watch?v=9DvmLMUfGss", "channel": "Hoover Institution Library & Archives"}, {"title": "Requiem for the American Dream with Noam Chomsky DOCUMENTARY - Politics, Philosophy", "url": "https://www.youtube.com/watch?v=WEnv5I8Aq4I", "channel": "Gravitas Documentaries"}, {"title": "Noam Chomsky Interview Used in Documentary \"Manufacturing Consent\", February 1, 1990", "url": "https://www.youtube.com/watch?v=Qv-zIE_HxLA", "channel": "Non-Corporate News"}, {"title": "Noam Chomsky - Freedom of Speech: The Origins Podcast", "url": "https://www.youtube.com/watch?v=VjoAmkonH50", "channel": "The Origins Podcast"}, {"title": "Beyond Imagination: Writing with Aphantasia and Autism - Alina Bellchambers", "url": "https://www.youtube.com/watch?v=ltrMbzjshUQ", "channel": "Neurodivergent Mates"}, {"title": "MyComms App Demo Video", "url": "https://www.youtube.com/watch?v=MCe3eLPUOiA", "channel": "Communication Spectrum"}, {"title": "Hunter S. Thompson on Fear and Loathing on the Campaign Trail '72 (1973)", "url": "https://www.youtube.com/watch?v=Id3NqRFAst8", "channel": "TMH"}, {"title": "Radiohead - Motion Picture Soundtrack (acoustic)", "url": "https://www.youtube.com/watch?v=hDBnJKwFjVc", "channel": "a.r"}, {"title": "Radiohead - \"Karma Police\" (1997) | David Letterman", "url": "https://www.youtube.com/watch?v=A_QmLwGgDJE", "channel": "Letterman"}, {"title": "Father & Son EPIC BATTLE ROBOTS! / Rock-Em Sock-Em !", "url": "https://www.youtube.com/watch?v=AHgcaIMT4lQ", "channel": "TurboToyTime"}, {"title": "🔵 🎶 📻  SEGA Lofi & Chill Radio [24/7] - Video Game Remixes to work, study, sleep or game to", "url": "https://www.youtube.com/watch?v=pLQvbC8wptk", "channel": "Melodies Zone"}, {"title": "Billy Corgan Performs the Smashing Pumpkins Hit “Disarm” on the Stern Show", "url": "https://www.youtube.com/watch?v=GxmGyJrvDi4", "channel": "The Howard Stern Show"}, {"title": "Professor has MENTAL BREAKDOWN and accuses class of cheating", "url": "https://www.youtube.com/watch?v=bl8Z7Dl7P9A", "channel": "Almost Friday TV"}, {"title": "Huiev% - Wrenasmir [Full Album]", "url": "https://www.youtube.com/watch?v=Au6kzRtQtk4", "channel": "Craig Smith"}, {"title": "Verdant Complex | 2-Hour Brutalist Ambience", "url": "https://www.youtube.com/watch?v=Odm1dSrtmxA", "channel": "Dreamfibre"}, {"title": "The Smashing Pumpkins - Full Concert | Live at Fillmore Auditorium (1994)", "url": "https://www.youtube.com/watch?v=NQ5T4PwvaOY", "channel": "Alt Vault"}, {"title": "Tape Bowing Ensemble - Open Reel Ensemble", "url": "https://www.youtube.com/watch?v=vaG5tVnpkwc", "channel": "Open Reel Ensemble"}, {"title": "FLAT TIME/sounding - An Interview with David Toop at the Whitechapel Gallery - Music & Live Words", "url": "https://www.youtube.com/watch?v=rSNcH59UdR8", "channel": "Whitechapel Gallery"}, {"title": "How Comedy Was Destroyed by an Anti-Reality Doomsday Cult", "url": "https://www.youtube.com/watch?v=ewvRS3NwIlQ", "channel": "The Elephant Graveyard"}, {"title": "1976: BIG JIM's Big BOOZY Bike Trip to Braemar | Nationwide | Weird and Wonderful | BBC Archive", "url": "https://www.youtube.com/watch?v=cZk2jV5gJbM", "channel": "BBC Archive"}, {"title": "Countdown - The Most Extraordinary Numbers Game Ever?", "url": "https://www.youtube.com/watch?v=pfa3MHLLSWI", "channel": "countdowngoofs"}, {"title": "🎵 Neural Nexus: Cozy Balcony over the Cloud Tops: Water and Ambient Music | 4K | 10 hours", "url": "https://www.youtube.com/watch?v=kSnw_K3cxTs", "channel": "View Escape"}, {"title": "Synecdoche, New York - Exclusive: Script Factory Interview with Charlie Kaufman", "url": "https://www.youtube.com/watch?v=bygoCDYwTIA", "channel": "MovieWeb"}, {"title": "Synecdoche, New York (2008) - Preacher Scene HD", "url": "https://www.youtube.com/watch?v=hQsEGQ0PAJQ", "channel": "Awareness Bureau"}, {"title": "Oasis - Acquiesce - The White Room 17.04.95", "url": "https://www.youtube.com/watch?v=7qvKdXA1EGI", "channel": "Dommer1973"}, {"title": "Under Skies - Pixel Art Film Animation", "url": "https://www.youtube.com/watch?v=4F_rMEsl-fc", "channel": "Tim Morrow"}, {"title": "SHIFTY: The unauthorised 6th episode | Adam Curtis interview", "url": "https://www.youtube.com/watch?v=kZYnNII6fco", "channel": "PoliticsJOE"}, {"title": "Oasis - Some Might Say [Remastered for greater dynamics and no clipping]", "url": "https://www.youtube.com/watch?v=h3R1Cyzdu7M", "channel": "PaghWraith"}, {"title": "\"To Have and Have Not\" by Ernest Hemingway | A Podcast Summary of Classic Novels", "url": "https://www.youtube.com/watch?v=kc7-OGq7VH4", "channel": "Novel Conversations"}, {"title": "Romeo (I Think of You)", "url": "https://www.youtube.com/watch?v=nMv_wMjstDU", "channel": "Novatrippa - Topic"}, {"title": "Lofi Zen – Cozy Cafe Lo-fi away from the Rain-Soaked City | Beats for Calm, Focus, and Dreams | 4K", "url": "https://www.youtube.com/watch?v=QAObkFIe4lQ", "channel": "Lofi Zen"}, {"title": "How to Create a Task Breakdown in the MyComms App", "url": "https://www.youtube.com/watch?v=kPzJ3s2umKw", "channel": "Communication Spectrum"}, {"title": "Lofi Zen - Calm Beats from a Trailer Balcony Above Neon City | For Study, Sleep, or Relaxation | 4K", "url": "https://www.youtube.com/watch?v=tbXlI4WpAJw", "channel": "Lofi Zen"}, {"title": "Liam Gallagher and Coldplay - Live Forever (One Love Manchester)", "url": "https://www.youtube.com/watch?v=NDJlPG_M600", "channel": "BBC Music"}, {"title": "Noel Gallagher “Wonderwall” Live on the Stern Show (1997)", "url": "https://www.youtube.com/watch?v=DL0auwO0bWE", "channel": "The Howard Stern Show"}, {"title": "Brit Awards 1996", "url": "https://www.youtube.com/watch?v=QtwEg8oXJaI", "channel": "thequalitydan"}, {"title": "Oasis - Stand by me 4K Remastered", "url": "https://www.youtube.com/watch?v=BUYChGHCbvs", "channel": "Kije Gallagher"}, {"title": "Oasis - Stand by Me Acoustic 4K Remastered (Live at Bonehead's Outtake 1997)", "url": "https://www.youtube.com/watch?v=1RAyHWl0_6g", "channel": "Thiago Aguiar"}, {"title": "Noel Gallagher Interview + 'Stop Crying Your Heart Out' Live (Oasis) | The Panel", "url": "https://www.youtube.com/watch?v=2d3pMKGnH-U", "channel": "Working Dog Productions"}, {"title": "David Shields - Story Hour in the Library", "url": "https://www.youtube.com/watch?v=ExCYTPlk5ec", "channel": "University of California Television (UCTV)"}, {"title": "Simpsons Trampoline", "url": "https://www.youtube.com/watch?v=clKqZZynW9E", "channel": "Beer Baron"}, {"title": "Oasis - Right Here Right Now (2022 HD rebroadcast)", "url": "https://www.youtube.com/watch?v=NojD_GgPR4o", "channel": "Oasis Media Archive"}, {"title": "Liam and Noel 1994 Paris interview FULL", "url": "https://www.youtube.com/watch?v=S2UXmnxrdN4", "channel": "LG X"}, {"title": "Don DeLillo's Libra", "url": "https://www.youtube.com/watch?v=wdHlm8oKEpE", "channel": "Electric Cereal"}, {"title": "Oasis - Live at Maine Road (Night 2)  - Full Broadcast - 4/28/1996 -  [ remastered, 60FPS, HD ]", "url": "https://www.youtube.com/watch?v=7hCykIuvUts", "channel": "fshoaps"}, {"title": "Oasis Cast No Shadow live maine road1996", "url": "https://www.youtube.com/watch?v=HcX1vYJuWmE", "channel": "kurtdiscot 1994"}, {"title": "Oasis - Live Forever (Maine Road, 1996) 1080p50fps AI Upscale Example", "url": "https://www.youtube.com/watch?v=FdiqEABaRI4", "channel": "Music Upscale Archive"}, {"title": "Reminiscing 2022", "url": "https://www.youtube.com/watch?v=MOIVdp50-gk", "channel": "Ethan Wang"}, {"title": "DeLillo & Krasny & Cosmopolis/part 3", "url": "https://www.youtube.com/watch?v=r_GvLk5Gae8", "channel": "donologist"}, {"title": "Don DeLillo & John Humphrys", "url": "https://www.youtube.com/watch?v=IIZkxItyDn4", "channel": "donologist"}, {"title": "Damon Albarn - Royal Morning Blue (Live on Later)", "url": "https://www.youtube.com/watch?v=3OLJS_gm7Ro", "channel": "BBC Music"}, {"title": "Hot Chip - Bath Full Of Ecstasy (Live on KEXP)", "url": "https://www.youtube.com/watch?v=eecxXnPSskw", "channel": "KEXP"}, {"title": "Noel Gallagher's High Flying Birds - If I Had A Gun (Live @ David Letterman 2011)", "url": "https://www.youtube.com/watch?v=xqwsNjkCADM", "channel": "Rodrigo Paixão"}, {"title": "Noel Gallagher If I Had A Gun Acoustic For 1Live in Germany", "url": "https://www.youtube.com/watch?v=fURwXIqWk7Y", "channel": "MisforMusicDotCom"}, {"title": "let your mind rest", "url": "https://www.youtube.com/watch?v=iBUsakQuVZY", "channel": "Mylesxiety"}, {"title": "Slavoj Žižek interview on NiteBeat", "url": "https://www.youtube.com/watch?v=KjEtmZZvGZA", "channel": "planetjanet"}, {"title": "Good News Week S02E14 - 1997-05-16", "url": "https://www.youtube.com/watch?v=xTdW0Nsc_Ws", "channel": "ObviousParody"}, {"title": "Oasis - Noel & Liam about Live Forever (and Nirvana)", "url": "https://www.youtube.com/watch?v=PDOM8Xzjp_E", "channel": "Tommy4Liverpool"}, {"title": "Live Forever - The Rise and Fall of Brit Pop (legendado)", "url": "https://www.youtube.com/watch?v=QALQNd1U9hw", "channel": "Paulo Ferreira"}, {"title": "Oasis - Some Might Say - TOTP Full Original Version HD", "url": "https://www.youtube.com/watch?v=Q96cWPp5vio", "channel": "ScottishTeeVee"}, {"title": "Oasis - Whatever (Official Video)", "url": "https://www.youtube.com/watch?v=EHfx9LXzxpw", "channel": "Oasis"}, {"title": "1985: Making TEXT ADVENTURE Games | Micro Live | Retro Gaming | BBC Archive", "url": "https://www.youtube.com/watch?v=qXAubRZ-qjw", "channel": "BBC Archive"}, {"title": "[60fps Rin Len Full] Electric Angel えれくとりっく・えんじぇぅ - Kagamine Rin Len 鏡音リンレン DIVA English romaji PDA", "url": "https://www.youtube.com/watch?v=cFYA7iYRrdI", "channel": "googoo888"}, {"title": "The best of Rik & Ade as they drop out of character! Hilarious! - Rik Mayall remembered...", "url": "https://www.youtube.com/watch?v=9VpPKyELmnQ", "channel": "Hydra's House"}, {"title": "Rik Mayall - Poetry.", "url": "https://www.youtube.com/watch?v=sMQNH9G5nbI", "channel": "Normski"}, {"title": "DJ Shadow \"Dark Days\" vinyl rip", "url": "https://www.youtube.com/watch?v=mVyTRjv38Yg", "channel": "xgreenxcloverx"}, {"title": "Ｃｉｔｙ Ｌｉｇｈｔｓ Ｌｏｕｎｇｅ '８７", "url": "https://www.youtube.com/watch?v=JeuNiqto_2g", "channel": "Retropical Records"}, {"title": "Ｓｅａｂｒｅｅｚｅ Ｃａｓｓｅｔｔｅ '８２", "url": "https://www.youtube.com/watch?v=oB2u9QSshLU", "channel": "Retropical Records"}, {"title": "Adam Curtis on the BBC, Politics & AI", "url": "https://www.youtube.com/watch?v=SM9hRuy31JA", "channel": "The Rest Is Entertainment"}, {"title": "view", "url": "https://www.youtube.com/watch?v=aT7c5J7Utf8", "channel": "JackStauber"}, {"title": "The Atomic Cafe Documentary (1982)", "url": "https://www.youtube.com/watch?v=4jwpz_dEZ_s", "channel": "History Changes"}, {"title": "Smashing Pumpkins – Full Concert [HD] | Live at Pinkpop 1994", "url": "https://www.youtube.com/watch?v=6TLX14m_oew", "channel": "Pinkpop Archive"}, {"title": "MASSIVE ATTACK v ADAM CURTIS", "url": "https://www.youtube.com/watch?v=yv_S8GdylEA", "channel": "Factory International"}, {"title": "Tairy Greene's Acting Seminar For Children | Tim and Eric Awesome Show, Great Job! | Adult Swim", "url": "https://www.youtube.com/watch?v=-x068o6Wtw4", "channel": "Adult Swim"}, {"title": "chill mix with Japanese grandpa at a stationery shop l The Shoten 006 l michika l house afro tribal", "url": "https://www.youtube.com/watch?v=pJ8EyNFg9Dk", "channel": "Login.jp_"}, {"title": "Badly drawn boy- something to talk about", "url": "https://www.youtube.com/watch?v=urmIrfnUyCw", "channel": "becausky"}, {"title": "Badly Drawn Boy - Newcastle Boiler Shop - 20 March, 2025. First set.", "url": "https://www.youtube.com/watch?v=gCiTppXBKgg", "channel": "jungleboy"}, {"title": "Shaun Micallef - Dracula has a seachange", "url": "https://www.youtube.com/watch?v=ICAYMhyPcgw", "channel": "Paul Harrison"}, {"title": "Lofi Zen – Lo-fi Drizzle Overlooking a Futuristic Metropolis | Calm Space for Late-Night Study | 4K", "url": "https://www.youtube.com/watch?v=Sncr5vLzFys", "channel": "Lofi Zen"}, {"title": "Linger , Cranberries cover", "url": "https://www.youtube.com/watch?v=aJsIPm380OQ", "channel": "Frank Watkinson"}, {"title": "Stephen Fry attacks media coverage of Peter Cook's death", "url": "https://www.youtube.com/watch?v=pQrTnhkQo5k", "channel": "frogandpeach1"}, {"title": "David Horowitz Taken Hostage on Live TV: 1987", "url": "https://www.youtube.com/watch?v=JoaL1eZ8onY", "channel": "Watch Fight Back!"}, {"title": "Goodbye, SpongeBob", "url": "https://www.youtube.com/watch?v=2PC0lm0dE4E", "channel": "Cumbertoons"}, {"title": "12th Planet & Skrillex - Father Said", "url": "https://www.youtube.com/watch?v=isygJ6e_TWo", "channel": "12th Planet"}, {"title": "Love song . The Cure cover", "url": "https://www.youtube.com/watch?v=q5m1gxBacO0", "channel": "Frank Watkinson"}, {"title": "I miss you Blink 182 cover ,", "url": "https://www.youtube.com/watch?v=AnbEBT1xUgg", "channel": "Frank Watkinson"}, {"title": "SHIFTY – A brand new Adam Curtis series - BBC", "url": "https://www.youtube.com/watch?v=AQc8625Y03g", "channel": "BBC Trailers"}, {"title": "Maggie Millner, Nonfiction @ Brown", "url": "https://www.youtube.com/watch?v=4fUJfRa4zGU", "channel": "Brown University"}, {"title": "Under the Volcano with Sue Vice - part 2", "url": "https://www.youtube.com/watch?v=kZV4PwbqKSk", "channel": "The World Literature Podcast"}, {"title": "Under the Volcano with Sue Vice - part 1", "url": "https://www.youtube.com/watch?v=q9gAuwDYp9U", "channel": "The World Literature Podcast"}, {"title": "The Rip - Portishead with Thom Yorke Live @ Latitude Festival, 2015-07-18 [MultiCam]", "url": "https://www.youtube.com/watch?v=vzXRW5Yw4Uk", "channel": "onlygoodmusic"}, {"title": "Radiohead - Ceremony (Joy Division cover)", "url": "https://www.youtube.com/watch?v=cedNya7e8Uc", "channel": "killerevolver"}, {"title": "Radiohead - The Rip (Portishead Cover)", "url": "https://www.youtube.com/watch?v=Zt4XhAZDTA0", "channel": "CoverFilter"}, {"title": "Thom Yorke Full Set | From The Basement", "url": "https://www.youtube.com/watch?v=pHs15fe8AnE", "channel": "From The Basement"}, {"title": "Thom Yorke - Ingenue (Live Jonathan Ross Show)", "url": "https://www.youtube.com/watch?v=EZl6BRY9IYQ", "channel": "biffythecat1"}, {"title": "Radiohead  - True Love Waits - 12/5/95 - [2-Cam/Tweaks] - Song Debut - Luna Theatre,  Belgium", "url": "https://www.youtube.com/watch?v=KzyOfQeK-bY", "channel": "Johnny Airbag"}, {"title": "Thom Yorke -  Let Down (Sydney Opera House Nov 2024)", "url": "https://www.youtube.com/watch?v=K475fcGz7vE", "channel": "Krauro_RH"}, {"title": "Big Thief - \"UFOF\" (Live at WFUV)", "url": "https://www.youtube.com/watch?v=rpnZtNTtuvU", "channel": "WFUV Public Radio"}, {"title": "Bob Dylan & Joan Baez  \"It Ain't Me Babe\" Live 1964 (Reference for A Complete Unknown)", "url": "https://www.youtube.com/watch?v=GXg9Sf3wqwY", "channel": "Bell Plaines"}, {"title": "Pulp - Sylvia (Live at Finsbury Park 1998) - 4K Remastered", "url": "https://www.youtube.com/watch?v=yFTKsQA9HhY", "channel": "4K Pulp - Lives & Rare"}, {"title": "This Is Hardcore - Pulp Live", "url": "https://www.youtube.com/watch?v=nMFzgloxvvw", "channel": "Teenage Cancer Trust Unseen"}, {"title": "Budweiser Original Whassup Commercial", "url": "https://www.youtube.com/watch?v=ikkg4NobV_w", "channel": "bulls7123"}, {"title": "...We Care Because You Should (30 Year Anniversary Edition) [2025]", "url": "https://www.youtube.com/watch?v=I7ghP9g2k1g", "channel": "Braindance News"}, {"title": "Pinocchio-P feat. Hatsune Miku「Even if I'm Not Loved, You're Here」【Guitar + MALE Vocal】", "url": "https://www.youtube.com/watch?v=zKWhjY1w-2E", "channel": "Kamz Kun"}, {"title": "George's Toupée Turns Him Into A Jerk | The Beard | Seinfeld", "url": "https://www.youtube.com/watch?v=iVBbqvLtWBs", "channel": "Seinfeld"}, {"title": "Caramel Pain / 星街すいせい(official)", "url": "https://www.youtube.com/watch?v=UpEPkPg8YP4", "channel": "Suisei Channel"}, {"title": "AI Changed My Routine | Craig Smith #AI #Neurodiversity #DailyRoutine #CraigSmith", "url": "https://www.youtube.com/watch?v=p8BcxRlZD_4", "channel": "Neurodivergent Mates"}, {"title": "Kenneth Koch reading \"Boiling Water\"", "url": "https://www.youtube.com/watch?v=E2o__mk8Se8", "channel": "Ignatz Mouse"}, {"title": "Building communication success for autistic children with Proloquo", "url": "https://www.youtube.com/watch?v=wmaV4Gkpj9c", "channel": "Craig Smith"}, {"title": "Writer Anne Carson: Life is Not Fair | Louisiana Channel", "url": "https://www.youtube.com/watch?v=ksH3FIs0eJs", "channel": "Louisiana Channel"}, {"title": "Anne Carson: Beware the man whose handwriting sways like a reed in the wind", "url": "https://www.youtube.com/watch?v=g8fPmTtG0qw", "channel": "London Review of Books (LRB)"}, {"title": "R.E.M. - E-Bow the Letter (with Thom Yorke)", "url": "https://www.youtube.com/watch?v=-0O_QD-UZ8M", "channel": "arpegix"}, {"title": "Graduation Ceremony - March 2025", "url": "https://www.youtube.com/watch?v=3cR2oVNNaUQ", "channel": "Uni Newcastle College of International Education"}, {"title": "The unique inner lives of gifted children - Linda Silverman", "url": "https://www.youtube.com/watch?v=ctYVIYggRfg", "channel": "National Talent Centre of the Netherlands - NTCN"}, {"title": "Existential Crisis in Class", "url": "https://www.youtube.com/watch?v=NESBtODxNVA", "channel": "WhatsItLike"}, {"title": "🎵 Cozy Cyberpunk Loft: Rain and Ambient Music | Cyberpunk Bedroom above the City | 4K | 10 hours", "url": "https://www.youtube.com/watch?v=pCo1g5NQAqc", "channel": "View Escape"}, {"title": "Ｄｒｉｖｉｎｇ ｔｈｏｕｇｈｔ ｔｈｅ ９０ｓ // vaporwave, synthwave mix with VHS visuals", "url": "https://www.youtube.com/watch?v=w2DzVCaEXGA", "channel": "utopic.dreamer"}, {"title": "AI and the Neurodivergent Brain: A Game-Changer for Focus and Productivity - Craig Smith", "url": "https://www.youtube.com/watch?v=pYlLIWLydTk", "channel": "Neurodivergent Mates"}, {"title": "Rh Vx [Live at Maitland Art Gallery] - Wrenasmir", "url": "https://www.youtube.com/watch?v=y1HElMAuiWE", "channel": "Craig Smith"}, {"title": "Johnny Boy -You Are The Generation That Bought More Shoes &", "url": "https://www.youtube.com/watch?v=qp4GdI_bTD4", "channel": "fabtonerecords"}, {"title": "Navigating Healthcare with Apple’s AI Tools", "url": "https://www.youtube.com/watch?v=PSCTyPxbVag", "channel": "Christopher Hills"}, {"title": "Will Self - J.G. Ballard", "url": "https://www.youtube.com/watch?v=dsXVh0x_uDI", "channel": "Edinburgh University Literature Society"}, {"title": "ChatGPT + Apple Maps = sensory audit for excursions", "url": "https://www.youtube.com/watch?v=EV4p99n6dmc", "channel": "Craig Smith"}, {"title": "GRAND THEFT HAMLET | Official Trailer | Now Streaming on MUBI", "url": "https://www.youtube.com/watch?v=OloHiBOMPm8", "channel": "MUBI"}, {"title": "１９９３ ＢＬＵＥ ＨＯＵＲ", "url": "https://www.youtube.com/watch?v=aGNZFZmgjVw", "channel": "utopic.dreamer"}, {"title": "Adam Curtis Interview - 16/10/2016 (New film: HyperNormalisation)", "url": "https://www.youtube.com/watch?v=tVx3lt8ZKHw", "channel": "NewFutureMedia"}, {"title": "'Walking and Talking with AI' - interview with 1233 ABC Newcastle (29/01/25)", "url": "https://www.youtube.com/watch?v=Zz1HgZ_1aYo", "channel": "Craig Smith"}, {"title": "David Graeber vs  Peter Thiel:  Where Did the Future Go", "url": "https://www.youtube.com/watch?v=eF0cz9OmCGw", "channel": "Graeber Wave"}, {"title": "Norm Macdonald Is Married To A Real Battle-Axe | CONAN on TBS", "url": "https://www.youtube.com/watch?v=L7K-kaelQEs", "channel": "Team Coco"}, {"title": "Validation to value: The paradox of being likeable | Dan Ballard | TEDxCooks Hill", "url": "https://www.youtube.com/watch?v=z8uXhyHwMvw", "channel": "TEDx Talks"}, {"title": "Monty Python - Sir Edward Ross (don't call him \"Eddie Baby\")", "url": "https://www.youtube.com/watch?v=ufuWAfdbcVE", "channel": "Computer Gary"}, {"title": "Why Love is Harder in a Second Language | Magdalena Hoeller | TEDxCooks Hill", "url": "https://www.youtube.com/watch?v=Ijdva7j6Q9E", "channel": "TEDx Talks"}, {"title": "A Wake for Samuel Beckett with Harold Pinter (1990)", "url": "https://www.youtube.com/watch?v=YBXgSKG84Zg", "channel": "Manufacturing Intellect"}, {"title": "Jean John - Beep Street (Squarepusher) / \"The Octopus\"", "url": "https://www.youtube.com/watch?v=u5BJsRHuhaI", "channel": "Jean John"}, {"title": "A Circular Economy Approach to Food Waste | David Sivyer | TEDxCooks Hill", "url": "https://www.youtube.com/watch?v=Qe_JCwlGZ54", "channel": "TEDx Talks"}, {"title": "Do you have a victim mentality at work? | Stefanie Costi | TEDxCooks Hill", "url": "https://www.youtube.com/watch?v=XwWfEjvWG48", "channel": "TEDx Talks"}, {"title": "Why play is for everyone and not just kids | Trudi Boatwright | TEDxCooks Hill", "url": "https://www.youtube.com/watch?v=178nWmbgjmM", "channel": "TEDx Talks"}, {"title": "Habits for intergenerational health | Dave Nixon | TEDxCooks Hill", "url": "https://www.youtube.com/watch?v=ZvWnghrESo0", "channel": "TEDx Talks"}, {"title": "Tram Bell", "url": "https://www.youtube.com/watch?v=VPLuLLLFDE8", "channel": "AS WISH"}, {"title": "Squarepusher - Mibas Rhoja (Live in Tokyo, 2022)", "url": "https://www.youtube.com/watch?v=n2HVtJu2z6M", "channel": "Squarepusher"}, {"title": "Peppermint (feat. Lexy) - Jack Stauber", "url": "https://www.youtube.com/watch?v=MtTBqIAQ434", "channel": "JackStauber"}, {"title": "A unique approach to the public health crisis | Dr Tim Stewart | TEDxCooks Hill", "url": "https://www.youtube.com/watch?v=8pK7bLT03xA", "channel": "TEDx Talks"}, {"title": "How to break cycles of violence | Mariam Mohammed | TEDxCooks Hill", "url": "https://www.youtube.com/watch?v=jAw-mr2fCuE", "channel": "TEDx Talks"}, {"title": "The Way That I Go - Wrenasmir [teaser]", "url": "https://www.youtube.com/watch?v=3I_sX9F6FhA", "channel": "Craig Smith"}, {"title": "The Kooks | Ooh La | A Take Away Show", "url": "https://www.youtube.com/watch?v=P8DRxQATErY", "channel": "Blogothèque"}, {"title": "TEDx - AI for Neurodiverse Minds [Craig Smith]  #tedtalk #ai #neurodiversity #neurodivergent", "url": "https://www.youtube.com/watch?v=CP2BljzCaks", "channel": "Craig Smith"}, {"title": "Unlocking Potential: AI for Neurodiverse Minds | Craig Smith | TEDxCooks Hill", "url": "https://www.youtube.com/watch?v=WCqCMUAmpuc", "channel": "TEDx Talks"}, {"title": "Summer Endzone [Poem] - Craig Warren Smith", "url": "https://www.youtube.com/watch?v=t6LQPHEgedc", "channel": "Craig Smith"}, {"title": "You Ghost My Heart", "url": "https://www.youtube.com/watch?v=93Sfl5rRBGw", "channel": "The Muun Lofi"}, {"title": "Relaxing Music for Stress Relief | Calm Mind & Deep Relaxation", "url": "https://www.youtube.com/watch?v=gWkabqRG2rM", "channel": "Mylesxiety"}, {"title": "\"Erring Together: Some Notes on Distortion, Art, and Others\"", "url": "https://www.youtube.com/watch?v=7EC5Zj1SEMo", "channel": "Lynch School of Education and Human Development"}, {"title": "Granta & PBS Exclusive: The Lights by Ben Lerner", "url": "https://www.youtube.com/watch?v=WFc220NWhyE", "channel": "Poetry Book Society"}, {"title": "Rodney Dangerfield at His Best on The Tonight Show Starring Johnny Carson (1983)", "url": "https://www.youtube.com/watch?v=LGvnHvba_b0", "channel": "Rodney Dangerfield"}, {"title": "Rodney Dangerfield Funniest Jokes Ever On The Johnny Carson Show 1983 online video cutter com", "url": "https://www.youtube.com/watch?v=cQLv7CG10B4", "channel": "Lilly"}, {"title": "Norm Macdonald Compilation", "url": "https://www.youtube.com/watch?v=AQwtMmzdlhI", "channel": "SportsGamingCubing"}, {"title": "The Undertaker and Mick Foley watch iconic Hell in a Cell Match: WWE Playback", "url": "https://www.youtube.com/watch?v=Pl2m9exy4lU", "channel": "WWE"}, {"title": "The Universal Sandpit : AI Tools For Inclusive Schools By Craig Smith", "url": "https://www.youtube.com/watch?v=FPkGhQgXaf0", "channel": "Skilling Future"}, {"title": "Universal Sandpit", "url": "https://www.youtube.com/watch?v=dHendgASW_w", "channel": "Francesco Petracca (Math&Fisica)"}, {"title": "Alice", "url": "https://www.youtube.com/watch?v=pAwR6w2TgxY", "channel": "Pogo"}, {"title": "Happy Talk: Simon Critchley + Philip Seymour Hoffman", "url": "https://www.youtube.com/watch?v=TiQkdprJso0", "channel": "Rubin Museum of Himalayan Art"}, {"title": "The prodigy, and suburban bass - Early days  Documentary (1992)", "url": "https://www.youtube.com/watch?v=cbXIIK3BmFU", "channel": "l larky"}, {"title": "Adversarial Examples Are Not Bugs, They Are Features", "url": "https://www.youtube.com/watch?v=hMO6rbMAPew", "channel": "Yannic Kilcher"}, {"title": "Trojanow trifft: William T. Vollmann", "url": "https://www.youtube.com/watch?v=oE5cTJ1T58A", "channel": "Alte Schmiede"}, {"title": "Saltando [Prose] - Craig Warren Smith", "url": "https://www.youtube.com/watch?v=bp852iw5qXA", "channel": "Craig Smith"}, {"title": "Kurt Vonnegut Lecture", "url": "https://www.youtube.com/watch?v=4_RUgnC1lm8", "channel": "Case Western Reserve University"}, {"title": "Squarepusher - Venus No.17 Maximised [Full Album]", "url": "https://www.youtube.com/watch?v=3-HapRcbv2A", "channel": "Squarepusher"}, {"title": "Squarepusher - Ultravisitor (Remastered) [Full Album]", "url": "https://www.youtube.com/watch?v=JIdMLy-rKJA", "channel": "Squarepusher"}, {"title": "Practical AI for Inclusive Education - Webinar", "url": "https://www.youtube.com/watch?v=fFyBzMb9S0k", "channel": "Craig Smith"}, {"title": "BLECH：ブレック（Blech II: Blechsdöttir）- WARP RECORDS COMPILATION", "url": "https://www.youtube.com/watch?v=MSJY-wpoDYE", "channel": "郭隗_kakukai"}, {"title": "Strictly Kev and PC (DJ Food) - Blech (Wax Magazine Dec 1996) - CoverCDs", "url": "https://www.youtube.com/watch?v=CfQh3kK9wcg", "channel": "CoverCDs"}, {"title": "Squarepusher - Tetra-Sync (Live in Tokyo, 2004)", "url": "https://www.youtube.com/watch?v=AqVoWXaHAm4", "channel": "Squarepusher"}, {"title": "egcbf#dce [Wrenasmir]", "url": "https://www.youtube.com/watch?v=_q_i3EJ2NcI", "channel": "Craig Smith"}, {"title": "\"I loved every minute of it, however hard it had been\"", "url": "https://www.youtube.com/watch?v=GS7CxAtV5Ks", "channel": "Atish Joygobin"}, {"title": "Ch10 Australia Late News September 11, 2001 - first 40 mins. Sandra Sully.", "url": "https://www.youtube.com/watch?v=mXUM3UTndyY", "channel": "Rhettrospective"}, {"title": "Peter Sloterdijk in conversation with Slavoj Žižek, Indigo festival 2023", "url": "https://www.youtube.com/watch?v=_CqORC6g0jI", "channel": "Peter Sloterdijk"}, {"title": "Fred again.. & SOAK - just stand there (15th August 2024)", "url": "https://www.youtube.com/watch?v=3SO7AkGxawM", "channel": "Fred again . ."}, {"title": "Bret Victor - The Humane Representation of Thought", "url": "https://www.youtube.com/watch?v=agOdP2Bmieg", "channel": "Colin McDonnell"}, {"title": "James Baldwin — I'm writing for people, baby (Meeting the man)", "url": "https://www.youtube.com/watch?v=PjGzpVTrOEw", "channel": "Atelier Oncléo"}, {"title": "AI prompt engineering: A deep dive", "url": "https://www.youtube.com/watch?v=T9aRN5JkmL8", "channel": "Anthropic"}, {"title": "This Is Modern Art / 1 of 6 / I Am a Genius / 1999", "url": "https://www.youtube.com/watch?v=ObhNiJaoVow", "channel": "Ivan Polissky"}, {"title": "My National Gallery - Michael Palin & Turner", "url": "https://www.youtube.com/watch?v=tpjDtSBwD2E", "channel": "Monty Python"}, {"title": "Zen TV 🌦️ (Frutiger Aero / Vaporwave Mix)", "url": "https://www.youtube.com/watch?v=4ozXwgGFr7k", "channel": "ArpWire TV"}, {"title": "𝙩𝙝𝙚 𝙘𝙖𝙡𝙢𝙚𝙨𝙩 𝙫𝙖𝙥𝙤𝙧𝙬𝙖𝙫𝙚 𝙢𝙞𝙭 𝙮𝙤𝙪 𝙬𝙞𝙡𝙡 𝙚𝙫𝙚𝙧 𝙡𝙞𝙨𝙩𝙚𝙣 𝙩𝙤", "url": "https://www.youtube.com/watch?v=zat2Iou7FPg", "channel": "utopic.dreamer"}, {"title": "Four Tet live at Lollapalooza, August 3 2024", "url": "https://www.youtube.com/watch?v=hs-VSiZ2ZHA", "channel": "Tom Lube"}, {"title": "TimesTalks: Bret Easton Ellis", "url": "https://www.youtube.com/watch?v=iDQ-dkEG0PY", "channel": "New York Times Events"}, {"title": "[Playlist] COZY LOFI VIBE Radio | cozy lofi hiphop chill funky citypop r&b cafe |", "url": "https://www.youtube.com/watch?v=T2exxa3JoqY", "channel": "const playlist = 'code';"}, {"title": "Julia Jacklin covers The Strokes 'Someday' for Like A Version", "url": "https://www.youtube.com/watch?v=DhSzpJOestE", "channel": "triple j"}, {"title": "Holly Throsby covers You Am I 'Berlin Chair' for Like A Version", "url": "https://www.youtube.com/watch?v=Vu5J2McNs04", "channel": "triple j"}, {"title": "Fred again.. - Rooftop Live (Arun’s Roof, London)", "url": "https://www.youtube.com/watch?v=6MAzUT1YhWE", "channel": "Fred again . ."}, {"title": "Howard Stern Rages Against Jay Leno | Letterman", "url": "https://www.youtube.com/watch?v=sX2czMnSPsg", "channel": "Letterman"}, {"title": "mark ronson & the business intl somebody to love me live on triple j", "url": "https://www.youtube.com/watch?v=KlMwtH0450A", "channel": "tripleJ1750"}, {"title": "SATURDAY IN THE PARK | Narrator Steve Buscemi guides us through Brooklyn, New York's Prospect Park", "url": "https://www.youtube.com/watch?v=U2Enefr53N8", "channel": "REI"}, {"title": "ＬＡＴＥ ＮＩＧＨＴ ＶＩＢＥＳ //  Nostalgic Aetheral  Ambient ~ Calm Vaporwave", "url": "https://www.youtube.com/watch?v=PhMuJRwZtdA", "channel": "utopic.dreamer"}, {"title": "Various Artists - Remote Viewing #2 (1989, Progressive Electronic)", "url": "https://www.youtube.com/watch?v=yZW-UozSINk", "channel": "december 32nd, 1969"}, {"title": "The 'Game On' Debate | The West Wing", "url": "https://www.youtube.com/watch?v=sS4UAZ5UfGY", "channel": "Warner Bros. TV"}, {"title": "Night Drive - 12 Hours - 4K Ultra HD 60fps", "url": "https://www.youtube.com/watch?v=xrW4MitN2kw", "channel": "VISUALDON"}, {"title": "１９９４ ＮＯＳＴＡＬＧＩＡ // the calmest vaporwave mix you will ever listen to", "url": "https://www.youtube.com/watch?v=TUswMkuLMZE", "channel": "utopic.dreamer"}, {"title": "Thom Yorke - Bloom (Live at Le Trianon, Pathway to Paris)", "url": "https://www.youtube.com/watch?v=PC6HmkNnSXo", "channel": "Thom Yorke"}, {"title": "MASSIVE ATTACK feat. Dot Allison - Aftersun", "url": "https://www.youtube.com/watch?v=0ZWVsbpJa4U", "channel": "MusicFunListener"}, {"title": "A Parallax of Tensor Sharding: an essay by Craig Smith", "url": "https://www.youtube.com/watch?v=00exLY9Yv_w", "channel": "Craig Smith"}, {"title": "Leaving / Leading: a poem by Craig Smith", "url": "https://www.youtube.com/watch?v=cJejfhEXI64", "channel": "Craig Smith"}, {"title": "a cruel angel's thesis (Neon Genesis Evangelion but is it okay if it's lofi hiphop?)", "url": "https://www.youtube.com/watch?v=pjiKGrLbTE8", "channel": "Kijugo"}, {"title": "Joji - TEST DRIVE (slowed to perfection)", "url": "https://www.youtube.com/watch?v=LR3Ssaov_P0", "channel": "Underwater Palace"}, {"title": "Antonio Williams & Kerry McCoy - Changes", "url": "https://www.youtube.com/watch?v=xObbmOWx5yw", "channel": "Bootleg Boys Club BBC"}, {"title": "Artificial Intelligence and Inclusive Education - Webinar", "url": "https://www.youtube.com/watch?v=tnmnNiU25u0", "channel": "Craig Smith"}, {"title": "Tantum Ergo on duduk", "url": "https://www.youtube.com/watch?v=R3pw8b_49_g", "channel": "bigbreath"}, {"title": "Bret Easton Ellis interview on \"The Informers\" (1994)", "url": "https://www.youtube.com/watch?v=i2a6GnykMWU", "channel": "Manufacturing Intellect"}, {"title": "Garden Monologue #1 (lemon myrtle and bush tomato) - Craig Warren Smith", "url": "https://www.youtube.com/watch?v=IZRQpFpPLDU", "channel": "Craig Smith"}, {"title": "Geoffrey Hinton | On working with Ilya, choosing problems, and the power of intuition", "url": "https://www.youtube.com/watch?v=tP-4njhyGvo", "channel": "Sana"}, {"title": "James Dickey reads \"Looking for the Buckhead Boys,\" c. 1969", "url": "https://www.youtube.com/watch?v=Fd7bN7Wdp-Q", "channel": "James Dickey"}, {"title": "PinocchioP - Because You’re Here feat. Hatsune Miku", "url": "https://www.youtube.com/watch?v=ygY2qObZv24", "channel": "ピノキオピー PINOCCHIOP OFFICIAL CHANNEL"}, {"title": "Anne Carson - Red Doc", "url": "https://www.youtube.com/watch?v=Dnx4Lz4vyjs", "channel": "Hibrow"}, {"title": "Introducing GPT-4o", "url": "https://www.youtube.com/watch?v=DQacCB9tDaw", "channel": "OpenAI"}, {"title": "James Dickey and Robert Lowell discuss dreams, c. 1969.", "url": "https://www.youtube.com/watch?v=_C_0PjBr4Tg", "channel": "James Dickey"}, {"title": "Anne Carson's  Public Lecture: “Stillness” , Centre for Comparative Literature", "url": "https://www.youtube.com/watch?v=vKD8S9pQcJo", "channel": "Comparative Literature, University of Toronto"}, {"title": "Anne Carson, Conversation, 26 October 2016", "url": "https://www.youtube.com/watch?v=BbridHY7o_M", "channel": "Lannan Foundation"}, {"title": "Max Porter’s stunning soliloquy on the weapons industry, ‘WILD WEST' | London, December 2023", "url": "https://www.youtube.com/watch?v=qGXcDz8PU4A", "channel": "The Palestine Festival of Literature"}, {"title": "Yo La Tengo - Aselestine (Live on KEXP)", "url": "https://www.youtube.com/watch?v=OelktzzTf5M", "channel": "KEXP"}, {"title": "How the US Is Destroying Young People’s Future | Scott Galloway | TED", "url": "https://www.youtube.com/watch?v=qEJ4hkpQW8E", "channel": "TED"}, {"title": "Washed Out - The Hardest Part (Official Video)", "url": "https://www.youtube.com/watch?v=-Nb-M1GAOX8", "channel": "Washed Out"}, {"title": "Hot Chip: Tiny Desk Concert", "url": "https://www.youtube.com/watch?v=pHWum1ptOxs", "channel": "NPR Music"}, {"title": "Saul Williams performs \"Said the Shotgun to the Head\"", "url": "https://www.youtube.com/watch?v=djRZjeYxpBM", "channel": "speakeasynyc"}, {"title": "Samurai Pizza Cats Episode 1 Stop Dragon My Cat Around!", "url": "https://www.youtube.com/watch?v=x5xkunUF-4w", "channel": "DBSuper"}, {"title": "Men I Trust - Oncle Jazz (Full Album HQ)", "url": "https://www.youtube.com/watch?v=iVg30U6O764", "channel": "Men I Trust"}, {"title": "Jamie xx - Baddy On The Floor ft. Honey Dijon", "url": "https://www.youtube.com/watch?v=xeKSdJqFM6o", "channel": "Jamie xx"}, {"title": "Synecdoche, New York - Final Scene", "url": "https://www.youtube.com/watch?v=tF9F3TkOzNQ", "channel": "Bal Masque"}, {"title": "Lighthouse Inventions: Live [Wrenasmir]", "url": "https://www.youtube.com/watch?v=MfvtN3PckyM", "channel": "Craig Smith"}, {"title": "Keane Perform Somewhere Only We Know & The Way I Feel LIVE on a Manchester Tram! BBC Music Day Video", "url": "https://www.youtube.com/watch?v=MlXyFIHzYR8", "channel": "Keane Analytics"}, {"title": "Víkingur Ólafsson: Tiny Desk Concert", "url": "https://www.youtube.com/watch?v=-n4BR0vUB80", "channel": "NPR Music"}, {"title": "Spalding Gray Monster in a Box", "url": "https://www.youtube.com/watch?v=5TejbroaDr4", "channel": "Robert Alvey"}, {"title": "I'm Still Standing - Ringway RS760", "url": "https://www.youtube.com/watch?v=KxtiPaEHUZ4", "channel": "Jim Hayden"}, {"title": "Synecdoche, New York", "url": "https://www.youtube.com/watch?v=HzgDZiG-in8", "channel": "YouTube Movies & TV"}, {"title": "Fellow Disjecta, Oh Sunny Danger Time - novella [Unabridged Audiobook] by Craig Warren Smith", "url": "https://www.youtube.com/watch?v=w_GeO7EOBFs", "channel": "Craig Smith"}, {"title": "Light Organ - Chopin's Op.25 No.12 (Ocean) Etude", "url": "https://www.youtube.com/watch?v=1S5vdLDq6fQ", "channel": "Nick Kanozik"}, {"title": "Visualisation of Beethoven Concerto No. 4 Mvt 1", "url": "https://www.youtube.com/watch?v=YyapartgiSw", "channel": "Nick Kanozik"}, {"title": "Nick Kanozik's Light Organ (Clavière a lumiére) - Scriabin op 65 no 2", "url": "https://www.youtube.com/watch?v=6ZEjZ-UpWoM", "channel": "Nick Kanozik"}, {"title": "(Pre-LGR) Moondust - Commodore 64 Game Review", "url": "https://www.youtube.com/watch?v=DTk4SqKL-PA", "channel": "LGR"}, {"title": "No Symbol [video clip]", "url": "https://www.youtube.com/watch?v=ebY7URoMvxo", "channel": "Craig Smith"}, {"title": "Noel Gallagher “Don’t Look Back in Anger” (Acoustic) on the Howard Stern Show in 1997", "url": "https://www.youtube.com/watch?v=FZqq1yp6P0E", "channel": "The Howard Stern Show"}, {"title": "The Whitsun Weddings by Philip Larkin, read by Alan Bennett", "url": "https://www.youtube.com/watch?v=yKKLAMVQfi0", "channel": "Primrose Hill Community Association"}, {"title": "The Glass House: an unlimited forever of tomorrows [essay]", "url": "https://www.youtube.com/watch?v=4FEYXWk9W7I", "channel": "Craig Smith"}, {"title": "Sovereignty is an Artificial Soul (essay)", "url": "https://www.youtube.com/watch?v=E7TltZGZg3w", "channel": "Craig Smith"}, {"title": "Philip Larkin: Love and Death in Hull", "url": "https://www.youtube.com/watch?v=dqa6L22m0rY", "channel": "gymnopedija"}, {"title": "Return to Larkinland (BBC)", "url": "https://www.youtube.com/watch?v=yBmFCBXh7Rg", "channel": "Culture Vulture Rises"}, {"title": "Jon Stewart Interviews George Carlin | George Carlin | 40 Years of Comedy (1997)", "url": "https://www.youtube.com/watch?v=nCGGWeD_EJk", "channel": "Official George Carlin"}, {"title": "Alto Cache Variations EP [Wrenasmir]", "url": "https://www.youtube.com/watch?v=3jSBqeyH4OA", "channel": "Craig Smith"}, {"title": "Chia at Temporary Performance Assembly", "url": "https://www.youtube.com/watch?v=PZaQd80WGXY", "channel": "Chia"}, {"title": "Sigur Rós HEIMA Full Extended Re-Edit without interviews voice-overs vintage clips etc - Live 2006", "url": "https://www.youtube.com/watch?v=_4v-dumTNqo", "channel": "spiderbite76"}, {"title": "2020 E.A.T. #SilentListen | #MariannaSimnett: Birds Scream at the Top of Their Lungs", "url": "https://www.youtube.com/watch?v=iM7hB8jqgmU", "channel": "E.A.T. | Engadin Art Talks"}, {"title": "Firefly | Marianna Simnett | Official Video | OUTPUTS", "url": "https://www.youtube.com/watch?v=pH7E8m3aKOY", "channel": "OUTPUTS"}, {"title": "Dream Baby Dream (Suicide) in Hypernormalisation", "url": "https://www.youtube.com/watch?v=ExlCLqHyUe4", "channel": "Davin"}, {"title": "Yo La Tengo- \"Stockholm Syndrome\" (Bunker Session)", "url": "https://www.youtube.com/watch?v=XVPGHynaLxY", "channel": "Yo La Tengo"}, {"title": "Wolf & Cub // Dusk at the Watagan Forest Motel", "url": "https://www.youtube.com/watch?v=u0xAMaclos0", "channel": "Wolf & Cub"}, {"title": "Yokohama Kaidashi Kikou OVA 1-2", "url": "https://www.youtube.com/watch?v=_3_dBxBi84I", "channel": "SlightlyUsedVCR (SlightlyUsedVCR)"}, {"title": "Les Murray, discussing early Australian poetry. University of Sydney", "url": "https://www.youtube.com/watch?v=8Kmh9ROool8", "channel": "The Monthly"}, {"title": "THE DAYLIGHT MOON  A film about the poet Les Murray", "url": "https://www.youtube.com/watch?v=2ZiVxnfToWI", "channel": "Don Featherstone"}, {"title": "Watch & Repeat Play: A Warp Records Mix (mixed by Buddy Peace & ZILLA)", "url": "https://www.youtube.com/watch?v=2944jzx8ZPE", "channel": "AphexAcid"}, {"title": "Squarepusher - Wendorlan (Scope Vid)", "url": "https://www.youtube.com/watch?v=cLOd03UGmH8", "channel": "Squarepusher"}, {"title": "A Complicated Surgery Will Take Place On The Beach Tonight - novel [unabridged audiobook] by CWSmith", "url": "https://www.youtube.com/watch?v=FdkyWASQGcU", "channel": "Craig Smith"}, {"title": "Antinomicity - novella [unabridged audiobook] by Craig Warren Smith", "url": "https://www.youtube.com/watch?v=Wb4_OBTPe2s", "channel": "Craig Smith"}, {"title": "Simon & Garfunkel - Granada TV 1967 (Full TV Special)", "url": "https://www.youtube.com/watch?v=wgtH9_dcxs4", "channel": "Fab Attic"}, {"title": "The Royal Tenenbaums - Kids are alright", "url": "https://www.youtube.com/watch?v=Q5Hbs0s6_sQ", "channel": "The Final Cut"}, {"title": "SAMUEL BECKETT - EMBERS (1959) The Original Radio BBC", "url": "https://www.youtube.com/watch?v=hRFSAHMaX8U", "channel": "SASTRAJINGGA STUDIO"}, {"title": "Prompt: A radio play for two voices", "url": "https://www.youtube.com/watch?v=9EVzaRKrWfc", "channel": "Craig Smith"}, {"title": "Mega Man Relaxing Music + Rain Sounds For Sleeping, Studying, And Relaxing", "url": "https://www.youtube.com/watch?v=WX0TEUVLhCI", "channel": "Prime Shiem"}, {"title": "Will Self's Kafka Journey: A Prague Walking Tour", "url": "https://www.youtube.com/watch?v=niIf080qSfE", "channel": "London Review of Books (LRB)"}, {"title": "Anthony Lister's Superhero Wall 2018 - Fire Extinguisher Painting", "url": "https://www.youtube.com/watch?v=aInpYpFHeQk", "channel": "Jake Anderson"}, {"title": "Byung-Chul Han, The Burnout Society", "url": "https://www.youtube.com/watch?v=_qikrYBd4tw", "channel": "Overthink Podcast"}, {"title": "OpenAI CEO Sam Altman on the Future of AI", "url": "https://www.youtube.com/watch?v=bpQ2TkK0NSw", "channel": "Bloomberg Television"}, {"title": "IDPwD ’23: Drones AND How Artificial Neural Networks Are Helping Give Me A Voice", "url": "https://www.youtube.com/watch?v=Ics__8DoCy0", "channel": "Christopher Hills"}, {"title": "🀣 🀢 🀥 🀤", "url": "https://www.youtube.com/watch?v=IegUffVH9UM", "channel": "Chia"}, {"title": "Composing with Cubes:  Iannis Xenakis and Nomos Alpha", "url": "https://www.youtube.com/watch?v=2B-RVF9heeo", "channel": "Alannah Marie"}, {"title": "Spectralism: An Introduction", "url": "https://www.youtube.com/watch?v=Smw1qwk-hW4", "channel": "Classical Nerd"}, {"title": "A Complete Guide to New Complexity and its Core Composers", "url": "https://www.youtube.com/watch?v=PcmHEpXFWgk", "channel": "Classical Nerd"}, {"title": "Xenakis' 'Nomos Alpha' recorded by Arne Deforce, with animation by Marcus du Sautoy & Simon Russell", "url": "https://www.youtube.com/watch?v=fWlceolQMGQ", "channel": "BCMG (Birmingham Contemporary Music Group)"}, {"title": "Autoincorrect (Newcastle Poetry Prize) - Craig Warren Smith", "url": "https://www.youtube.com/watch?v=wYfvyyi88j0", "channel": "Craig Smith"}, {"title": "Our World Is Coming To An End | Aaron Bastani Meets Slavoj Žižek | Downstream", "url": "https://www.youtube.com/watch?v=6_XHvOGWkCY", "channel": "Novara Media"}, {"title": "Hotline TNT - I Thought You'd Change", "url": "https://www.youtube.com/watch?v=mMxEbHC_xqY", "channel": "Flip Sandy"}, {"title": "Ryuichi Sakamoto | Opus | Teaser | NYFF61", "url": "https://www.youtube.com/watch?v=QxJr7W93Skc", "channel": "Film at Lincoln Center"}, {"title": "317 Lasers", "url": "https://www.youtube.com/watch?v=yb6SoQERKks", "channel": "Funki Porcini"}, {"title": "Slowdive - Sugar for the Pill (Live at The Current, 2017)", "url": "https://www.youtube.com/watch?v=EskZhEUtlb8", "channel": "The Current"}, {"title": "'98 Squarepusher interview (Sonic Acts documentary)", "url": "https://www.youtube.com/watch?v=uJGa5guPpV8", "channel": "Squarepusher Central [Fantube]"}, {"title": "haloed be her eve [2023 mix] - Wrenasmir", "url": "https://www.youtube.com/watch?v=GEIG11JF1AM", "channel": "Craig Smith"}, {"title": "The Computer Chronicles - Greatest Computer Games (1995)", "url": "https://www.youtube.com/watch?v=e-wieD_-PYo", "channel": "The Computer Chronicles"}, {"title": "🕹️ [4K HDR] SUPER POTATO Akihabara | A RETROGAMING Paradise in Tokyo 🇯🇵", "url": "https://www.youtube.com/watch?v=GjaCWdDPCvw", "channel": "Sugoii Japan"}, {"title": "Nico Muhly - Wonder Showzen", "url": "https://www.youtube.com/watch?v=PFflGHn7NVI", "channel": "awheelbarrow"}, {"title": "Sophie Ellis-Bextor - Do You Remember The First Time? (Live at Maida Vale)", "url": "https://www.youtube.com/watch?v=s3jbx0L5-88", "channel": "BBC Radio 2"}, {"title": "R.E.M. - Nightswimming (Later… with Jools Holland on BBC1, 14 October 2003)", "url": "https://www.youtube.com/watch?v=KVT0S0j7F9Y", "channel": "remhq"}, {"title": "Undercover Karaoke with Jewel", "url": "https://www.youtube.com/watch?v=rmv1VhrtYRo", "channel": "Funny Or Die"}, {"title": "Corey Feldman on Howard Stern, 1992", "url": "https://www.youtube.com/watch?v=iO_8n5y5edk", "channel": "goongoon"}, {"title": "🍣 japan nights 🎧 lofi beats and city streets 24/7", "url": "https://www.youtube.com/watch?v=L6dIjBKmDoo", "channel": "TOKYO TONES"}, {"title": "Gerald Murnane - The Plains - Book Review", "url": "https://www.youtube.com/watch?v=h1E0IiNb2vE", "channel": "PaperBird"}, {"title": "LERA LYNN // WOLF LIKE ME // TV ON THE RADIO", "url": "https://www.youtube.com/watch?v=vwVX4cG6F9s", "channel": "Lera Lynn"}, {"title": "Look At Miss Ohio - Gillian Welch & David Rawlings -BBC4 Sessions", "url": "https://www.youtube.com/watch?v=9NPEj63d0jY", "channel": "fw22901"}, {"title": "Stephen Colbert Interviews EMINEM in Strangest Interview Ever", "url": "https://www.youtube.com/watch?v=voAzz7hRuVE", "channel": "NewsHunter29"}, {"title": "Watch-Party: July 26, 1993- \"Siamese Dream\" album release set at Tower Records (Acoustic)-  30ys ago", "url": "https://www.youtube.com/watch?v=hzwOwzGtiZw", "channel": "Alt Copperpot5"}, {"title": "Rytma - Gameplay Teaser", "url": "https://www.youtube.com/watch?v=7GNuunXt-JM", "channel": "ARSHIV"}, {"title": "Telegraph LP [Geometrum Projection]", "url": "https://www.youtube.com/watch?v=HWocvQEzrdE", "channel": "Craig Smith"}, {"title": "Sunbiirds - Live at Franky's (Set #2)", "url": "https://www.youtube.com/watch?v=Cw46GHoDrZo", "channel": "Sunbiirds"}, {"title": "audio reactive visuals with pure data", "url": "https://www.youtube.com/watch?v=BYhvhzbdJF4", "channel": "Artiom Constantinov"}, {"title": "The Argument Skit", "url": "https://www.youtube.com/watch?v=evPZ-0UhL1E", "channel": "VT16"}, {"title": "Øy - Sikte på 10 (Tap Dance Controlling Electronics)", "url": "https://www.youtube.com/watch?v=qpy6uHXIsoM", "channel": "Kristoffer Lislegaard"}, {"title": "Beniamino Gigli (1933)", "url": "https://www.youtube.com/watch?v=d8G5azsXJ5E", "channel": "British Pathé"}, {"title": "Men I Trust - Say Can You Hear (garage session)", "url": "https://www.youtube.com/watch?v=h076DeX_Z-o", "channel": "Men I Trust"}, {"title": "Slowdive - Sugar For The Pill (Live on KEXP)", "url": "https://www.youtube.com/watch?v=pkvyXgr2hUg", "channel": "KEXP"}, {"title": "Telegraph LP [full album] - Wrenasmir", "url": "https://www.youtube.com/watch?v=MVjAmcE6JA0", "channel": "Craig Smith"}, {"title": "Vernaliso [Telegraph Vol. 4] - Wrenasmir", "url": "https://www.youtube.com/watch?v=vlNwcvxiQ1o", "channel": "Craig Smith"}, {"title": "Ornphanic [Telegraph Vol. 4] - Wrenasmir", "url": "https://www.youtube.com/watch?v=Dc41dM0ZnDo", "channel": "Craig Smith"}, {"title": "Jaron Lanier – Who is Civilization for? (+ Q&A with Ulrich Kelber) Willy Brandt Lecture 2018", "url": "https://www.youtube.com/watch?v=rGqiswuJuQI", "channel": "Bundeskanzler-Willy-Brandt-Stiftung"}, {"title": "1990s Jaron Lanier Presents VPL Virtual Reality Glove", "url": "https://www.youtube.com/watch?v=E1q9zDSAQEw", "channel": "Kinolibrary"}, {"title": "David Shields, Writing Diversity Series", "url": "https://www.youtube.com/watch?v=a9hxoSJOHh8", "channel": "Brown University"}, {"title": "VHS Japan III (Vaporwave Mix)", "url": "https://www.youtube.com/watch?v=QaQS379Idss", "channel": "b r h m"}, {"title": "Spacetime Fabric Softener", "url": "https://www.youtube.com/watch?v=zK3Gf-8lGtI", "channel": "ProfSoap"}, {"title": "Sunbiirds - Harbour (-32.924, 151.771)", "url": "https://www.youtube.com/watch?v=CQrjyy5i9Ow", "channel": "Sunbiirds"}, {"title": "Loveline - classic smoke detector moment", "url": "https://www.youtube.com/watch?v=phKAYe9T08A", "channel": "Collapse"}, {"title": "BINKBEATS - Little Nerves feat. Niels Broos", "url": "https://www.youtube.com/watch?v=zfpSn7ZYC0A", "channel": "BINKBEATS"}, {"title": "Documentary on the 80s and 90s Demoscene: The Art Of The Algorithms [FULL]", "url": "https://www.youtube.com/watch?v=5MexnBunH_g", "channel": "L33T GUY"}, {"title": "Hackers", "url": "https://www.youtube.com/watch?v=G5cFV_0sahI", "channel": "cultdeadcow"}, {"title": "Hacker Documentary: Unauthorized Access by Annaliza Savage [1994]", "url": "https://www.youtube.com/watch?v=fDk82bLYscg", "channel": "L33T GUY"}, {"title": "The Soothing Ambience Of The French Riviera (in a Box)", "url": "https://www.youtube.com/watch?v=LtzqAUV5h-o", "channel": "HAINBACH"}, {"title": "Robert Lowell documentary", "url": "https://www.youtube.com/watch?v=mvhr_7WnTu0", "channel": "Author Documentaries"}, {"title": "Squarepusher - Abacus 2", "url": "https://www.youtube.com/watch?v=IM4fk_0ZDYw", "channel": "jurassicmarc"}, {"title": "Robert Lowell reads Skunk Hour", "url": "https://www.youtube.com/watch?v=hSlcc2b02yc", "channel": "awetblackbough"}, {"title": "Squarepusher - Square Window", "url": "https://www.youtube.com/watch?v=cyKRJyEZcAw", "channel": "BATalsdrTribute"}, {"title": "Aphex Twin - Stone in Focus (Full Track Loop)", "url": "https://www.youtube.com/watch?v=0GKHaQ2MpuI", "channel": "Slowdive"}, {"title": "Narnian medley on soprano duduk", "url": "https://www.youtube.com/watch?v=dmdR4ArLQkw", "channel": "bigbreath"}, {"title": "Isaiah 9:2 - relaxing musical meditation with duduk, flute, mandolin, and Korg Wavestate!", "url": "https://www.youtube.com/watch?v=Waxk7tutPao", "channel": "bigbreath"}, {"title": "Everything Is Sludge: Art in the Post-Human Era", "url": "https://www.youtube.com/watch?v=OuaDbu_VBLY", "channel": "Lily Alexandre"}, {"title": "AFX - T16.5 MADMA with nastya+5.2", "url": "https://www.youtube.com/watch?v=1sWcjqEPLdU", "channel": "kebabkillaz"}, {"title": "Hermann Hesse's Long Summer (1997)", "url": "https://www.youtube.com/watch?v=Wzb_W_kJNnI", "channel": "Ben Callan"}, {"title": "My dinner with andre (gameboy homebrew) (simpsons fangame)", "url": "https://www.youtube.com/watch?v=4K1teBVMPTs", "channel": "Falyeto"}, {"title": "Will Self on the privatisation of public space.", "url": "https://www.youtube.com/watch?v=Rvq5yWDsb-Q", "channel": "Architecture Foundation"}, {"title": "Aethel Hleodor [Telegraph Vol. 3] - Wrenasmir", "url": "https://www.youtube.com/watch?v=MBrbPwnkGTM", "channel": "Craig Smith"}, {"title": "I Finally Get Radiohead", "url": "https://www.youtube.com/watch?v=Fi7SGJGaW8s", "channel": "Michael Palmisano"}, {"title": "The Rub of Time | Martin Amis (SVWC Pavilion 2019)", "url": "https://www.youtube.com/watch?v=7sXUOTm_qcw", "channel": "Sun Valley Writers' Conference"}, {"title": "Novelist Martin Amis 2014 Interview", "url": "https://www.youtube.com/watch?v=Xsb30YODrNQ", "channel": "Remembrance of Things Past"}, {"title": "Newcastle Council Carpark Demolition On The 28th Of May, 2022 12:10pm", "url": "https://www.youtube.com/watch?v=f9xwfvpaINo", "channel": "Newcastle & The Hunter Valley, Now And Then On Film"}, {"title": "Richard Yates, University of Alabama Bankhead Visiting Writers Series, September 1990", "url": "https://www.youtube.com/watch?v=NbKCu_mciJs", "channel": "Black Warrior Review"}, {"title": "Will Self & John Banville Discuss 'Dubliners' in Conversation With Carlo Gébler", "url": "https://www.youtube.com/watch?v=egE8kDHGUYo", "channel": "The James Joyce Centre"}, {"title": "RSA ANIMATE: The Divided Brain", "url": "https://www.youtube.com/watch?v=dFs9WO2B8uI", "channel": "The RSA"}, {"title": "Will Self in conversation with Alexandra Lewis", "url": "https://www.youtube.com/watch?v=AnRoL54Jqcg", "channel": "George Washington Wilson Centre for Visual Culture"}, {"title": "Fatlip - What Up Fatlip (Official Music Video)", "url": "https://www.youtube.com/watch?v=WotkQ6vFuGw", "channel": "Strength in Numbers TV"}, {"title": "A Message to Young People from Andrei Tarkovsky", "url": "https://www.youtube.com/watch?v=_Vvdtaaprzw", "channel": "CRITERION"}, {"title": "Fred again..: Tiny Desk Concert", "url": "https://www.youtube.com/watch?v=4iQmPv_dTI0", "channel": "NPR Music"}, {"title": "Sculpting Time - Introduction to Tarkovsky's Solaris by Will Self", "url": "https://www.youtube.com/watch?v=zhSQySxcePI", "channel": "Curzon"}, {"title": "The Life of Raymond Carver documentary with Rare Interview (1989)", "url": "https://www.youtube.com/watch?v=7mjuSh--24o", "channel": "Manufacturing Intellect"}, {"title": "\"Cathedral\" by Raymond Carver, as read by James Naughton", "url": "https://www.youtube.com/watch?v=QjDZV92jX44", "channel": "H Fogerty"}, {"title": "Bon Iver: 715 - CR∑∑KS - NPR Live", "url": "https://www.youtube.com/watch?v=CaYgMdq6NDg", "channel": "fartboy287"}, {"title": "How Bon Iver Wrote ‘iMi’: 5 Years, 28 People and a Piece of Cardboard | Diary of a Song", "url": "https://www.youtube.com/watch?v=VoDqdIBtOh0", "channel": "The New York Times"}, {"title": "There But Not There: Gregory Crewdson Documentary", "url": "https://www.youtube.com/watch?v=XNPwVLU38pc", "channel": "Crewdson Studio"}, {"title": "4 am", "url": "https://www.youtube.com/watch?v=tBcPji_jRDc", "channel": "Conspersa Prometheum"}, {"title": "【電車】踏切動画 58【ふみきり カンカン】パンダくろしお「サステナブルSmileトレイン」に会ってきました アドベンチャーワールド 楓浜ちゃん", "url": "https://www.youtube.com/watch?v=bt0muKJnAuE", "channel": "ふみきりんチャンネル"}, {"title": "Slavoj Zizek Vs Will Self in Dangerous Ideas", "url": "https://www.youtube.com/watch?v=CId1iOWQUuo", "channel": "How To Academy"}, {"title": "Matthew Cha | A.I. [Live] U | Live at Lakeforest", "url": "https://www.youtube.com/watch?v=8WFR1fexs7Y", "channel": "Matthew Cha"}, {"title": "Deconstruction in Ableton Live: DJ Shadow - Mutual Slump at Sonar +D, Barcelona", "url": "https://www.youtube.com/watch?v=VTsyBUPAWsA", "channel": "pointblank music school"}, {"title": "Sebald Lecture 2010: Will Self", "url": "https://www.youtube.com/watch?v=8lkdi5m2exU", "channel": "British Centre for Literary Translation"}, {"title": "Psychogeography | Will Self | Talks at Google", "url": "https://www.youtube.com/watch?v=zVEgOiB7Bo8", "channel": "Talks at Google"}, {"title": "In Confidence: Will Self (Part Four)", "url": "https://www.youtube.com/watch?v=Q08vUu11Bfo", "channel": "FRiB6890"}, {"title": "Will Self - Isolation, Solitude, Loneliness and the Composition of Long-Form Fiction", "url": "https://www.youtube.com/watch?v=S2Mo5hLWcsg", "channel": "Ageing Studies"}, {"title": "Suzanne Ciani Creates The Soundtrack For A Pinball Machine", "url": "https://www.youtube.com/watch?v=r28i-k3mL3o", "channel": "Tokyo Matt"}, {"title": "Powderfinger - Passenger (Live - 1999 ARIAs)", "url": "https://www.youtube.com/watch?v=yw25PDcihkg", "channel": "Powderfinger"}, {"title": "Fred again.. x The Streets x Dermot Kennedy - Mike (desert island duvet) [live from my flat]", "url": "https://www.youtube.com/watch?v=arD0zfLpG1A", "channel": "Fred again . ."}, {"title": "Telegraph - Vol. 2 [Wrenasmir]", "url": "https://www.youtube.com/watch?v=AULudsYDbzg", "channel": "Craig Smith"}, {"title": "Music helps you forget the troubles in your head | 3 hour lofi hip hop mix/ lofi study/ work", "url": "https://www.youtube.com/watch?v=aIExzhcQ0xs", "channel": "Lofi 코딩"}, {"title": "Kid Koala - live - Festival Week-end au bord de l'eau - Sierre (Switzerland) - 1-2-3 July 2011", "url": "https://www.youtube.com/watch?v=T2NMwRHO3oc", "channel": "Fondation du Week-end au bord de l'eau"}, {"title": "Iain Sinclair ‎– Dead Letter Office: Poems 1970–2004", "url": "https://www.youtube.com/watch?v=9l_PYa8nnVs", "channel": "Celestialrailroad"}, {"title": "Fred again.. | Boiler Room: London", "url": "https://www.youtube.com/watch?v=c0-hvjV2A5Y", "channel": "Boiler Room"}, {"title": "Tim Rogers (You Am I) - 1999-08-27 - Micallef Program, ABC TV", "url": "https://www.youtube.com/watch?v=zffosi_WWM0", "channel": "You Am I Archive"}, {"title": "Acoustic Sun in an Empty Room by The Weakerthans (Heavyweight Podcast Theme)", "url": "https://www.youtube.com/watch?v=Q7jCY7ZOTyQ", "channel": "R-Prizzle"}, {"title": "Newcastle - A Place to Face the Future", "url": "https://www.youtube.com/watch?v=FZat70rpAok", "channel": "UoNCC"}, {"title": "[VINYL SESSIONS] JBL L112", "url": "https://www.youtube.com/watch?v=EIBXlK3KVQg", "channel": "mindspray"}, {"title": "tokyo night drive - lofi hiphop + chill + beats to sleep/relax/study to ✨", "url": "https://www.youtube.com/watch?v=Lcdi9O2XB4E", "channel": "TOKYO TONES"}, {"title": "PlayStation jungle mix 01 - drum & bass, atmospheric, liquid, vocal, intelligent, etc", "url": "https://www.youtube.com/watch?v=Do5_wU9X1pc", "channel": "ryland kurshenoff"}, {"title": "Jungle in Gaming Mix [01]  // PS1, N64, Xbox // 1hr Drum and Bass Mix - ambient, intelligent, liquid", "url": "https://www.youtube.com/watch?v=twBcMibg1Vs", "channel": "Camaz"}, {"title": "The Divine Comedy - A Lady Of A Certain Age (HQ)", "url": "https://www.youtube.com/watch?v=bU_bGYaa3FY", "channel": "ilcorvojo3"}, {"title": "Ben Lerner in conversation with Duncan White", "url": "https://www.youtube.com/watch?v=i_y9tXM_N6Q", "channel": "Mahindra Humanities Center"}, {"title": "Writer Ben Lerner on Teaching Creative Writing | Louisiana Channel", "url": "https://www.youtube.com/watch?v=xfNW-AOeWg4", "channel": "Louisiana Channel"}, {"title": "Godspeed You Black Emperor - Live 2015 [Post Rock] [Full Set] [Live Performance] [Concert]", "url": "https://www.youtube.com/watch?v=u3ohEemIQaQ", "channel": "AMELIIE Post Rock Will Never Die"}, {"title": "The railroad crossing is the best! ☆ Tomica Plarail Amazing Interaction ☆ Play with Tomica! Here ...", "url": "https://www.youtube.com/watch?v=KEzOB1O4SnQ", "channel": "おもちゃんねるん Omotyannerun"}, {"title": "Ólafur Arnalds - This Place is a Shelter (Soft Sounds)", "url": "https://www.youtube.com/watch?v=gZFUykzixeE", "channel": "dhe Perissann"}, {"title": "Squarepusher - Daydreams (Original Soundtrack)", "url": "https://www.youtube.com/watch?v=w_oz6KIX12A", "channel": "Squarepusher Central [Fantube]"}, {"title": "The Fernleigh Train Line c1970", "url": "https://www.youtube.com/watch?v=5gjGWNHt1aE", "channel": "Newcastle & The Hunter Valley, Now And Then On Film"}, {"title": "Samuel Beckett's biographer donates hours of taped conversation with writer to Reading's archive", "url": "https://www.youtube.com/watch?v=mE_FlZysLXs", "channel": "University of Reading"}, {"title": "Samuel Beckett - \"Mute\" Interview for Swedish Television - 1969", "url": "https://www.youtube.com/watch?v=hYwScABAciA", "channel": "GrantInnis"}, {"title": "Beckett on Film: Catastrophe", "url": "https://www.youtube.com/watch?v=vSG0GDLX23g", "channel": "Preservation of Media - Drama"}, {"title": "Harold Pinter on Samuel Beckett", "url": "https://www.youtube.com/watch?v=-N99S8n2TiA", "channel": "xenos82"}, {"title": "Samuel Beckett - Krapp's Last Tape [Beckett on Film] (La última cinta de Krapp | Español) HD", "url": "https://www.youtube.com/watch?v=wkpXX1_JDIg", "channel": "Mort Cinder"}, {"title": "Making of 'What Are You Afraid Of (Live In Studio)'", "url": "https://www.youtube.com/watch?v=X3P4nCmWoHg", "channel": "jamielidell"}, {"title": "Jamie Lidell BELIEVE IN ME - LIVE", "url": "https://www.youtube.com/watch?v=wd0Mj5oriWI", "channel": "jamielidell"}, {"title": "Songs that will Cure Your Hangover with Ceylan Göksel", "url": "https://www.youtube.com/watch?v=hzWl_j__KFU", "channel": "MAJ"}, {"title": "Newcastle From The Harbour In 1944", "url": "https://www.youtube.com/watch?v=MKGeONcCuU8", "channel": "Newcastle & The Hunter Valley, Now And Then On Film"}, {"title": "Wrenasmir - Spinet Destroiet", "url": "https://www.youtube.com/watch?v=ZhHIMgbO7sA", "channel": "Craig Smith"}, {"title": "Midday (it's fine) [feat. Olya]", "url": "https://www.youtube.com/watch?v=O_xO60YVPYc", "channel": "Craig Smith"}, {"title": "LOFI ✨ - beats to relax", "url": "https://www.youtube.com/watch?v=As8HuFcAHIo", "channel": "EPIC SOUL"}, {"title": "Bergkristall80s [Xmas Muzak]", "url": "https://www.youtube.com/watch?v=-1zt-gdYR-g", "channel": "Craig Smith"}, {"title": "Flim - Aphex Twin - Andreas Kapsalis", "url": "https://www.youtube.com/watch?v=djaI0SxoT78", "channel": "Andreas Kapsalis"}, {"title": "David Foster Wallace on Bookworm (1996-2006)", "url": "https://www.youtube.com/watch?v=Oy65OBX98tY", "channel": "M.J. Nicholls"}, {"title": "Wrenasmir - Year Closing Mix", "url": "https://www.youtube.com/watch?v=0XL9cVP3388", "channel": "Craig Smith"}, {"title": "Doo Wop", "url": "https://www.youtube.com/watch?v=6hGfoRtAm04", "channel": "Anna Butterss"}, {"title": "Masterclass with Steve Albini", "url": "https://www.youtube.com/watch?v=sKEzHie9tAI", "channel": "SAE University College Aus"}, {"title": "Couldn't Care Less. Cormac McCarthy in conversation with David Krakauer", "url": "https://www.youtube.com/watch?v=HrUy1Vn2KdI", "channel": "Karol Jałochowski"}, {"title": "What if You Could Sing in Your Favorite Musician's Voice? | Holly Herndon | TED", "url": "https://www.youtube.com/watch?v=5cbCYwgQkTE", "channel": "TED"}, {"title": "ANNA MEREDITH - Inhale Exhale", "url": "https://www.youtube.com/watch?v=05o1gMSEOLo", "channel": "Anna Meredith"}, {"title": "Pulp - Dishes", "url": "https://www.youtube.com/watch?v=QwDZEAf9axY", "channel": "LWJHFan"}, {"title": "Adam Curtis on the fall of the Soviet Union's worrying parallels with modern Britain", "url": "https://www.youtube.com/watch?v=663vLIYBcpI", "channel": "PoliticsJOE"}, {"title": "Local stories - in the Feldafing artist's villa Waldberta", "url": "https://www.youtube.com/watch?v=A9NdMWAUkso", "channel": "münchen.tv"}, {"title": "[4K]Walking in dense buildings, said to be the largest residential area in Asia, Huaguoyuan, Guiyang", "url": "https://www.youtube.com/watch?v=Zvq9pybXg-4", "channel": "Wang's record"}, {"title": "W. G. Sebald | 92Y Readings", "url": "https://www.youtube.com/watch?v=ccMCGjWLlhY", "channel": "The 92nd Street Y, New York"}, {"title": "DeLillo & Silverblatt & The Body Artist/part 2", "url": "https://www.youtube.com/watch?v=-xCQEKP5iqE", "channel": "donologist"}, {"title": "DeLillo & Silverblatt & The Body Artist/part 1", "url": "https://www.youtube.com/watch?v=B2rcom3sE2U", "channel": "donologist"}, {"title": "DeLillo & Silverblatt & Underworld/part 1", "url": "https://www.youtube.com/watch?v=dRjk1t77Ic8", "channel": "donologist"}, {"title": "Lightening Bolt - ATP - 13 Monsters", "url": "https://www.youtube.com/watch?v=u461LIj-GuY", "channel": "spandapoo"}, {"title": "DJ Hero: I Want You Back / Semi-Charmed Life - Jackson 5 / Third Eye Blind - 5 Stars - FC # 8", "url": "https://www.youtube.com/watch?v=KR6WRbiXaHA", "channel": "xMissFourEyes"}, {"title": "Hiérophante - Clichés (Official Music Video)", "url": "https://www.youtube.com/watch?v=XqwbqxzsA2g", "channel": "Hiérophante"}, {"title": "How Real Is The Rehearsal?", "url": "https://www.youtube.com/watch?v=pQRKDBpZ_5g", "channel": "Thomas Flight"}, {"title": "Gorillaz - Feel Good Inc feat. De La Soul (Live on Letterman)", "url": "https://www.youtube.com/watch?v=WIZW4SGVbhA", "channel": "Gorillaz"}, {"title": "Leonardo's Bride - Even When I'm Sleeping (Live 1997)", "url": "https://www.youtube.com/watch?v=LKYw4OTYPFY", "channel": "AussieTV"}, {"title": "スト ZERO ３ 全 エンディング (バグ利用)", "url": "https://www.youtube.com/watch?v=ntWYdnfMti0", "channel": "PICKjob"}, {"title": "Jens Lekman - Your Arms Around Me - Accoustic ukulele", "url": "https://www.youtube.com/watch?v=dXA3kgZYRmw", "channel": "241U5"}, {"title": "【交換工事あり】節約矢印信号機が低コストに更新しました。", "url": "https://www.youtube.com/watch?v=ZzV1lai1Yjo", "channel": "konjikiの鉄チャン"}, {"title": "Sunrise Rough - I [Ortus] (Wrenasmir)", "url": "https://www.youtube.com/watch?v=oPzGqtRXYsw", "channel": "Craig Smith"}, {"title": "Sunset Rough - I [Occasus] (Wrenasmir)", "url": "https://www.youtube.com/watch?v=dvQSqJ4R80E", "channel": "Craig Smith"}, {"title": "How To With John Wilson: The NXIVM story", "url": "https://www.youtube.com/watch?v=G7nA9CGjyBE", "channel": "comedy poison"}, {"title": "Philip Larkin, Monitor, Down Cemetery Road", "url": "https://www.youtube.com/watch?v=Coe11pgoj8E", "channel": "LocalRadioFrance"}, {"title": "Ding. Excellent Schools. Dong. Quality Hospitals. (The Simpsons)", "url": "https://www.youtube.com/watch?v=qYGUlXmIfqw", "channel": "ThingsICantFindOtherwise"}, {"title": "Elliott Smith - Live at Bumbershoot Festival, 2000 [HD Remaster]", "url": "https://www.youtube.com/watch?v=SDHXMAxVe5Q", "channel": "Kane McCarthy"}, {"title": "Vanilla - Into The Dream (Full Album)", "url": "https://www.youtube.com/watch?v=gUUH8xzu41s", "channel": "Vanilla"}, {"title": "Luxury Wafers Live Sessions - Benoit Pioulard - Triggering Back", "url": "https://www.youtube.com/watch?v=mKxLR0m_nHY", "channel": "LuxuryWafersVideo"}, {"title": "College Lecture Series - Neil Postman - \"The Surrender of Culture to Technology\"", "url": "https://www.youtube.com/watch?v=hlrv7DIHllE", "channel": "College of DuPage"}, {"title": "Bottom Live - Cock up and mistakes live on tour, Adrian Edmondson and Rik Mayall", "url": "https://www.youtube.com/watch?v=NjQD9zpAcGk", "channel": "StarViewProductions"}, {"title": "A Lady of Letters", "url": "https://www.youtube.com/watch?v=iOqgDmaYdqA", "channel": "Rick Salvi"}, {"title": "ART/ARCHITECTURE - Caspar David Friedrich", "url": "https://www.youtube.com/watch?v=go87azXN5Ms", "channel": "The School of Life"}, {"title": "ART/ARCHITECTURE - Edward Hopper", "url": "https://www.youtube.com/watch?v=rluUMpndKbo", "channel": "The School of Life"}, {"title": "On Feeling Melancholy", "url": "https://www.youtube.com/watch?v=PaZ1EmPOE_k", "channel": "The School of Life"}, {"title": "blur - beetlebum - live - 1997", "url": "https://www.youtube.com/watch?v=uRIlh7jqEjs", "channel": "whatdoidonow1996"}, {"title": "Blur - Out Of Time (Official Music VIdeo)", "url": "https://www.youtube.com/watch?v=SRkX1Up1vnc", "channel": "Blur"}, {"title": "Muscles - Ice Cream (Acoustic Piano Triple J Version) - Hottest 100 #45 - Guns Babes Lemonade", "url": "https://www.youtube.com/watch?v=EDNsk9E9cOI", "channel": "HillaryRandallsngq"}, {"title": "Jetsons: The Movie Official Trailer #1 - Mel Blanc Movie (1990) HD", "url": "https://www.youtube.com/watch?v=-nuo5QfemCE", "channel": "Rotten Tomatoes Classic Trailers"}, {"title": "Burt Reynolds in \"Sherman's March\" (1986)", "url": "https://www.youtube.com/watch?v=ncwJ2VUj_38", "channel": "Brett Walsh"}, {"title": "Sherman's March: Meet Claudia", "url": "https://www.youtube.com/watch?v=6yfhygVWGOI", "channel": "First Run Features"}, {"title": "1985 Sherman's March  Official Trailer 1 First Run Features", "url": "https://www.youtube.com/watch?v=z3X5dyb3q2Y", "channel": "Klokline Cinema"}, {"title": "Writers Series: David Shields", "url": "https://www.youtube.com/watch?v=2bKSf4d6S_s", "channel": "University of Richmond"}, {"title": "NYRB: David Shields presents \"The Very Last Interview,\" with Laura Kipnis", "url": "https://www.youtube.com/watch?v=GluAgch6CHI", "channel": "Community Bookstore Live"}, {"title": "Kendrick Lamar - The Heart Part 5", "url": "https://www.youtube.com/watch?v=uAPUkgeiFVY", "channel": "Kendrick Lamar"}, {"title": "William T. Vollmann: »Europe-Central« | Im Gespräch mit Clemens J. Setz, Lesung von Ingo Hülsmann", "url": "https://www.youtube.com/watch?v=EYL9B-pH4W4", "channel": "Suhrkamp Verlag"}, {"title": "Mike Patton - Peeping Tom - Demo - Five Seconds", "url": "https://www.youtube.com/watch?v=xysdPNvvJxo", "channel": "PattonizedGirl"}, {"title": "Project A-ko rocket scene", "url": "https://www.youtube.com/watch?v=rUsKv6WoFtA", "channel": "Slad"}, {"title": "Manga Entertainment 90's Anime Trailers", "url": "https://www.youtube.com/watch?v=SkaqTDJd2gY", "channel": "AssertedWolf"}, {"title": "Michael Silverblatt's Library", "url": "https://www.youtube.com/watch?v=poWxsGK7TrA", "channel": "Leaf by Leaf"}, {"title": "Morning Prayer with Skott and Behr", "url": "https://www.youtube.com/watch?v=XjSqvg_oCsw", "channel": "kenneld"}, {"title": "Boards of Canada - Societas x Tape", "url": "https://www.youtube.com/watch?v=LXV1dsx5yfs", "channel": "insomniacnintendo"}, {"title": "'Dear Alice' Decommodified Edition | Solarpunk anime ambience with no ads", "url": "https://www.youtube.com/watch?v=UqJJktxCY9U", "channel": "Waffle To The Left"}, {"title": "Boards of Canada - Roygbiv (Live Cover) Minilogue / Digitakt", "url": "https://www.youtube.com/watch?v=4JdemEIITQA", "channel": "PsilocyBen"}, {"title": "Akai S3200XL Atmospheric Jungle", "url": "https://www.youtube.com/watch?v=kAOJGm3jW1A", "channel": "Architecture"}, {"title": "Kid Koala performs Moon River", "url": "https://www.youtube.com/watch?v=fjFi4MHO_go", "channel": "Aural Grooves"}, {"title": "Drunk Trumpet (Live) - Kid Koala", "url": "https://www.youtube.com/watch?v=0jRkd_uAw7I", "channel": "Aural Grooves"}, {"title": "Alan Walker - Faded on iPad(GarageBand)//ガレージバンドiOSで作ってみた【DTM】", "url": "https://www.youtube.com/watch?v=qo_1MMwQrmw", "channel": "GarageBand Music"}, {"title": "Elliott Smith - Miss Misery (Late Night with Conan OBrien - 1998-03-04)", "url": "https://www.youtube.com/watch?v=NFOavi5m0vE", "channel": "Jawn Jawn"}, {"title": "Human Futures - Adam Curtis", "url": "https://www.youtube.com/watch?v=AHXh1222HhE", "channel": "Transition21"}, {"title": "Elliott Smith - Waltz #2 (XO)", "url": "https://www.youtube.com/watch?v=HCoZRmqKmQ8", "channel": "Joel Sagard"}, {"title": "Elliott Smith - Waltz #2", "url": "https://www.youtube.com/watch?v=YLDEFkhvHVw", "channel": "kigonjiro"}, {"title": "Adam Curtis - The Rise and Fall of the TV Journalist", "url": "https://www.youtube.com/watch?v=O9FaIyc4vpU", "channel": "VidResearchLeague"}, {"title": "Bitter Lake, Adam Curtis 2015 720p", "url": "https://www.youtube.com/watch?v=84P4dzow1Bw", "channel": "Godburn"}, {"title": "John Cleese and Eric Idle's Secrets To A Perfect Marriage | CONAN on TBS", "url": "https://www.youtube.com/watch?v=HSOZ4wqgDdk", "channel": "Team Coco"}, {"title": "Shanghai, China - Songjiang - Wanda Plaza -1", "url": "https://www.youtube.com/watch?v=PHETkBU6X3Q", "channel": "Jim Brace"}, {"title": "非常口・電話ミニ踏切カンカン", "url": "https://www.youtube.com/watch?v=vjpOiONt6Wo", "channel": "Thepentamax"}, {"title": "The Century of the Self  - Part 2:  \"The Engineering of Consent\"", "url": "https://www.youtube.com/watch?v=fEsPOt8MG7E", "channel": "JustAdamCurtis"}, {"title": "CONVOCO! Forum 2018,  Hans Ulrich Obrist and Adam Curtis", "url": "https://www.youtube.com/watch?v=HhqRgKWyT38", "channel": "CONVOCO! Foundation"}, {"title": "Ambient jam with the Moog system and both Strymon Nightsky & Bluesky. RE-20 on voice", "url": "https://www.youtube.com/watch?v=ks4TOJql50g", "channel": "The_Changing_State"}, {"title": "Sleeping in Space", "url": "https://www.youtube.com/watch?v=ifCCKB9rpw8", "channel": "NEOTIC"}, {"title": "playlist for traveling in empty places", "url": "https://www.youtube.com/watch?v=n5N1cZnS6ZM", "channel": "nobody"}, {"title": "Ghostly Kisses - Live at Le Grand Salon", "url": "https://www.youtube.com/watch?v=wsc-XsSVqWY", "channel": "Ghostly Kisses"}, {"title": "DFAM, Mother 32,Subharmonicon, Strymon nightsky, Digitakt, hologram microcosm. #jamuary", "url": "https://www.youtube.com/watch?v=59ytODofOyM", "channel": "The_Changing_State"}, {"title": "DFAM, mother 32, Subharmonicon, Digitakt with Strymon night sky and blue sky. (sorry it's clipping)", "url": "https://www.youtube.com/watch?v=tLLtT8O9xX4", "channel": "The_Changing_State"}, {"title": "I See Flowers [Album Version] (Vocoder, Subharmonicon, Mother-32) - Wrenasmir", "url": "https://www.youtube.com/watch?v=t4Jj_jPGqvw", "channel": "Craig Smith"}, {"title": "Max Richter - On the nature of daylight, cover", "url": "https://www.youtube.com/watch?v=WNsYz8DjPpM", "channel": "cci35"}, {"title": "Radiohead-Kid A Cover by MKO 라디오헤드 Kid A", "url": "https://www.youtube.com/watch?v=w9MkfTdEGfc", "channel": "MongKencO"}, {"title": "Smells like teen spirit cover (Black Widow) 블랙 위도우 오프닝 커버", "url": "https://www.youtube.com/watch?v=1auFcxmeDWY", "channel": "MongKencO"}, {"title": "Onset - MIrack (ipad) and eurorack combination using ES-9", "url": "https://www.youtube.com/watch?v=XM4dLh7g4sU", "channel": "cci35"}, {"title": "Lullaby for Frans 1 (Mutable Instrument Clouds granular ASMR, Verbos Harmonic Oscillator, 4ms DLD)", "url": "https://www.youtube.com/watch?v=asoB5PF2PLw", "channel": "cci35"}, {"title": "Lullaby for Frans 2 (Mutable instruments Blades, Verbos Harmonic Oscillator, 4ms DLD)", "url": "https://www.youtube.com/watch?v=66i8PdusDhk", "channel": "cci35"}, {"title": "Lullaby for Frans 3 (Sputnik Oscillator, Pamelas New Workout, FxAid)", "url": "https://www.youtube.com/watch?v=9-giXA0ln90", "channel": "cci35"}, {"title": "Korg volca keys and eurorack outdoor grainbient jam", "url": "https://www.youtube.com/watch?v=5AQoEgPcyYc", "channel": "cci35"}, {"title": "NEW Sugargob Stickers!", "url": "https://www.youtube.com/watch?v=HzpvAkxBlnc", "channel": "StudioSappy"}, {"title": "Sugargob - Mad World (Cover)", "url": "https://www.youtube.com/watch?v=Ta2J4q2jqTQ", "channel": "StudioSappy"}, {"title": "Plaid - Dancers (Official Video)", "url": "https://www.youtube.com/watch?v=qSzH4DMo618", "channel": "Plaid"}, {"title": "Lo-fi from scratch (Livestream)", "url": "https://www.youtube.com/watch?v=R1FegtLFT0E", "channel": "Tristan Baldi"}, {"title": "The Prophetic Ideas of Peter Sloterdijk | Thomas Meaney [2018]", "url": "https://www.youtube.com/watch?v=ZkvvI1kxdN4", "channel": "Fadi Akil (Untimely Thoughts)"}, {"title": "Aubadion LP [full album] - Wrenasmir", "url": "https://www.youtube.com/watch?v=g8-9OaolSQ8", "channel": "Craig Smith"}, {"title": "Patet (Subharmonicon, Mother-32, Violin, Cello) - Wrenasmir", "url": "https://www.youtube.com/watch?v=5fQc7_hClgI", "channel": "Craig Smith"}, {"title": "Adam & Joe with Louis Theroux Dancing to Groove Is In The Heart (1990) | Adam Buxton", "url": "https://www.youtube.com/watch?v=taUqt_E0aOs", "channel": "Adam Buxton"}, {"title": "Reading by Denis Johnson - April 21, 2016", "url": "https://www.youtube.com/watch?v=DTIHhrFsvNU", "channel": "Cornell English Department"}, {"title": "Adventure time island song cover", "url": "https://www.youtube.com/watch?v=5yDCWS4stZ0", "channel": "Frank Watkinson"}, {"title": "Anna Meredith in conversation | Loop", "url": "https://www.youtube.com/watch?v=YcI63yfUgzQ", "channel": "Ableton"}, {"title": "New Year’s Day, 2022", "url": "https://www.youtube.com/watch?v=arZxCGPSkxw", "channel": "Craig Smith"}, {"title": "Hey Brother/You Make Me/I Cloud Be The One - Avicii", "url": "https://www.youtube.com/watch?v=MBNVfvIs5FE", "channel": "Vasco Carneiro"}, {"title": "G.W.F. Hegel’s Phenomenology of Spirit w/ Cadell Last", "url": "https://www.youtube.com/watch?v=Vw6nLxSV7Cg", "channel": "The Stoa"}, {"title": "Shaun Martin - The Yellow Jacket (7 Summers)", "url": "https://www.youtube.com/watch?v=KURfF4MVirU", "channel": "Shaun Martin"}, {"title": "mountain goats (with craig finn) - this year", "url": "https://www.youtube.com/watch?v=jnyyuxPBPeg", "channel": "andrewsullivan4"}, {"title": "Partimentodays LP [full album] - Wrenasmir", "url": "https://www.youtube.com/watch?v=Gkf95bnr7gk", "channel": "Craig Smith"}, {"title": "RACHEL MILNE: Nest", "url": "https://www.youtube.com/watch?v=Zl56nqtXkqQ", "channel": "City of Newcastle, Australia"}, {"title": "» Kyousougiga TV 京騒戯画 OP / Opening  「Koko」", "url": "https://www.youtube.com/watch?v=oYDKDrQaJ9Q", "channel": "SN: Fall 2013-C (Inactive)"}, {"title": "Alain de Botton on Emotional Education", "url": "https://www.youtube.com/watch?v=W9X7u-MeJz0", "channel": "The School of Life"}, {"title": "Why Is an Ordinary Life Not Good Enough Anymore? – Alain De Botton", "url": "https://www.youtube.com/watch?v=1KDB42qGT-8", "channel": "FightMediocrity"}, {"title": "Ministry of Sound - The Chillout Annual 2002 (Disc 1) (Electronic Chillout Mix) [HQ]", "url": "https://www.youtube.com/watch?v=k36WgZYDmSI", "channel": "TyakuLounge"}, {"title": "ANNA MEREDITH - Paramour", "url": "https://www.youtube.com/watch?v=yjmZLaymJU8", "channel": "Anna Meredith"}, {"title": "Trackers: The Sound of 16-Bit", "url": "https://www.youtube.com/watch?v=roBkg-iPrbw", "channel": "Ahoy"}, {"title": "* z o n i n g * o u t * | octatrack/digitone/moog :)", "url": "https://www.youtube.com/watch?v=bwgHDj2Zcuk", "channel": "raised ranch"}, {"title": "Analogy as the Core of Cognition", "url": "https://www.youtube.com/watch?v=n8m7lFQ3njk", "channel": "Stanford"}, {"title": "P&P LIVE! Mark Leyner | LAST ORGY OF THE DIVINE HERMIT w/ Porochista Khakpour", "url": "https://www.youtube.com/watch?v=wjBDUJ7ZtvY", "channel": "Politics and Prose"}, {"title": "THE LASERIUM", "url": "https://www.youtube.com/watch?v=MT-YWOh35cA", "channel": "Funki Porcini"}, {"title": "tori amos pretty good year live from new york  23 1 1997", "url": "https://www.youtube.com/watch?v=dJkzi6kCy0E", "channel": "toriamosrules1"}, {"title": "FORTRESS NEWCASTLE", "url": "https://www.youtube.com/watch?v=wOcpAMgPh1I", "channel": "Stories Of Our Town"}, {"title": "Portishead-We Carry On + The Rip Cover by MKO (Instrumental) 포티쉐드-위케리온+더 립 커버", "url": "https://www.youtube.com/watch?v=P_KPid3KLK8", "channel": "MongKencO"}, {"title": "The xx - Chained (John Talabot and Pional Blinded Remix)", "url": "https://www.youtube.com/watch?v=BdCYz6DsVwo", "channel": "The xx and 4 more"}, {"title": "P&P Live! Max Porter | THE DEATH OF FRANCIS BACON", "url": "https://www.youtube.com/watch?v=r8FrPJ_syyM", "channel": "Politics and Prose"}, {"title": "A Chip in the Sugar - Alan Bennett - Talking Heads", "url": "https://www.youtube.com/watch?v=ozEAkq3qSi0", "channel": "Ken Doh"}, {"title": "AFX (Aphex Twin) - 18 With My Family", "url": "https://www.youtube.com/watch?v=k2VzFuYz3rk", "channel": "ninauploadz"}, {"title": "Chaos A.D. - Psultan (Squarepusher Mix)", "url": "https://www.youtube.com/watch?v=86l4vHVihEo", "channel": "Copland OS"}, {"title": "AUDIO: Alan Bennett: Diary From the Pandemic Year", "url": "https://www.youtube.com/watch?v=Eyy1Bi9dAYI", "channel": "London Review of Books (LRB)"}, {"title": "Spinoza's 'Ethics': What do you mean by 'God'?", "url": "https://www.youtube.com/watch?v=F617UbSAaU4", "channel": "London Review of Books (LRB)"}, {"title": "John Berger and Michael Silverblatt - part 1", "url": "https://www.youtube.com/watch?v=BLivFgw_i-8", "channel": "sdeslimbes"}, {"title": "PICT Honorary Lecture IV: “Wittgenstein and the History of Philosophy” by Jonathan Rée", "url": "https://www.youtube.com/watch?v=18ll8-Ap-Bw", "channel": "Paris Institute for Critical Thinking"}, {"title": "Beach Surgery [Slowed // Reverb DJ Set] - LoFi Newcastle Pixel Entropy Mix of Wrenasmir Tunes {2021}", "url": "https://www.youtube.com/watch?v=fXRhDkFvDpQ", "channel": "Craig Smith"}, {"title": "Porter Robinson - Second Sky 2021 Set [Oakland Arena CA] [9/19/2021]", "url": "https://www.youtube.com/watch?v=ZY9FmePYioY", "channel": "Suzuki"}, {"title": "J G Ballard Documentary", "url": "https://www.youtube.com/watch?v=8LosxrbL3sU", "channel": "matley virgo"}, {"title": "How Aaron Sorkin Creates Musical Dialogue In ‘The Social Network’ | 10 Minutes Of Perfection", "url": "https://www.youtube.com/watch?v=SExMi2E4fRI", "channel": "Insider"}, {"title": "Utada Hikaru - One Last Kiss on iPad(GarageBand)//Neon Genesis EVANGELION", "url": "https://www.youtube.com/watch?v=hwZAhxw0-ZU", "channel": "GarageBand Music"}, {"title": "Wrenasmir - drawing a cathedral [visualisation]", "url": "https://www.youtube.com/watch?v=DlNVeUXxXhs", "channel": "Craig Smith"}, {"title": "The Bedroom Philosopher: Northcote (YouTube Comments)", "url": "https://www.youtube.com/watch?v=SLnZH-8wrTM", "channel": "The Bedroom Philosopher"}, {"title": "Wrenasmir - haloed be her eve [visualisation]", "url": "https://www.youtube.com/watch?v=CWlpnIGIL1Q", "channel": "Craig Smith"}, {"title": "Vorkuta is a deserted city beyond the Arctic Circle.", "url": "https://www.youtube.com/watch?v=KeH0qQccstQ", "channel": "Илья Бондарев"}, {"title": "Slavoj Žižek: The history of music in 3 minutes", "url": "https://www.youtube.com/watch?v=G2HxOY4nWX4", "channel": "TheNexusInstitute"}, {"title": "Roland MC-101: Insurgent Soul", "url": "https://www.youtube.com/watch?v=5QAbSE-pWhI", "channel": "Paul T Davies"}, {"title": "EOD - No One Knows", "url": "https://www.youtube.com/watch?v=ugpEs4yE_Js", "channel": "Deep Bear Recordings"}, {"title": "Inside Bank Corner On The 23rd Of June, 2021 At 10:45am", "url": "https://www.youtube.com/watch?v=aL_-3mVo9pg", "channel": "Newcastle & The Hunter Valley, Now And Then On Film"}, {"title": "The Gregory Brothers - Winning Live at Vinyl in Atlanta on Digitour", "url": "https://www.youtube.com/watch?v=Tjlrafz9qEQ", "channel": "Papaduke"}, {"title": "Anna Meredith - Bumps Per Minute", "url": "https://www.youtube.com/watch?v=HPqw4mYYKpQ", "channel": "Anna Meredith"}, {"title": "Carrowbrook, Lake St. Clair & Singleton 11th Of July, 2021 At 3:48pm", "url": "https://www.youtube.com/watch?v=aK0yxDxJLd8", "channel": "Newcastle & The Hunter Valley, Now And Then On Film"}, {"title": "06 - Nietzsche on Hardship - Philosophy: A Guide to Happiness", "url": "https://www.youtube.com/watch?v=280Ev9h_C3c", "channel": "spookybuk"}, {"title": "Photogrammetry is preserving Australian South Sea Islander's cultural treasures | ABC Australia", "url": "https://www.youtube.com/watch?v=Z-JSCllwKuQ", "channel": "ABC Australia"}, {"title": "Jimmy Stewart Reads a Touching Poem About His Dog Beau | Carson Tonight Show", "url": "https://www.youtube.com/watch?v=mwGnCIdHQH0", "channel": "Johnny Carson"}, {"title": "Eydís Evensen - Full Performance (Live on KEXP at Home)", "url": "https://www.youtube.com/watch?v=MhY7mVCIU6Q", "channel": "KEXP"}, {"title": "How's the Weather on Letterman, December 26, 1990", "url": "https://www.youtube.com/watch?v=30PWKsRlITs", "channel": "Don Giller"}, {"title": "The Samples: SQUAREPUSHER Edition", "url": "https://www.youtube.com/watch?v=NT0DbTgfWLM", "channel": "8MU"}, {"title": "Lisa Hannigan - Roads (Portishead) | Hibernacle 2020", "url": "https://www.youtube.com/watch?v=7iD9h2iTFUg", "channel": "Hibernacle Music"}, {"title": "The Loser (the worst interview on the internet, with David Shields and Bret Easton Ellis)", "url": "https://www.youtube.com/watch?v=3zdlm--X_5A", "channel": "Kristoffer Borgli"}, {"title": "Chill Modular Guitar ft. Digitakt + Moog Subharmonicon + Mother-32 // LONGING", "url": "https://www.youtube.com/watch?v=UAefamfSy5E", "channel": "Nate Horn"}, {"title": "4K SEOUL WALK - Welcome to the Rainy Cyberpunk Seoul. Ambience. Sleep. Cinematic", "url": "https://www.youtube.com/watch?v=wTms36EVOmc", "channel": "Seoul Trip Walk"}, {"title": "Xetaka 1", "url": "https://www.youtube.com/watch?v=H-FcopL1cAE", "channel": "Attacca Quartet"}, {"title": "Ambient Modular Guitar ft. Moog Subharmonicon + Digitakt // LOSS", "url": "https://www.youtube.com/watch?v=49TK3PRpcO8", "channel": "Nate Horn"}, {"title": "Abstract Neon Geometry! Geometry Lighting Rays. Relaxation Screensaver! Relaxation Time. 4K!", "url": "https://www.youtube.com/watch?v=sp58SVDkQTI", "channel": "Relaxation Time - 4K Amazing Relaxing Screensavers"}, {"title": "12 HOURS Abstract Macro Liquid in Slow Motion! 4K Relaxing Screensaver for Meditation Relaxing music", "url": "https://www.youtube.com/watch?v=HmxV8m9DFhs", "channel": "Relaxation Time - 4K Amazing Relaxing Screensavers"}, {"title": "The Gaslamp Killer - Live From My Living Room - Summer 2020", "url": "https://www.youtube.com/watch?v=Kd00YMcHv8M", "channel": "GASLAMPKILLER"}, {"title": "The Gaslamp Killer Boiler Room Berlin DJ Set", "url": "https://www.youtube.com/watch?v=dUjnxvVGzG0", "channel": "Boiler Room"}, {"title": "Pink Floyd - Careful With That Axe, Eugene (Live at Brighton Dome)", "url": "https://www.youtube.com/watch?v=7RnFH5F4zm4", "channel": "Pink Floyd"}, {"title": "It's 3am. Why so sad ? ~ lofi hip hop mix", "url": "https://www.youtube.com/watch?v=hzpt3fQjY9U", "channel": "Dreamy"}, {"title": "Squarepusher '4001' (Bacalao Remix) - 4001 Remix Competition Winner", "url": "https://www.youtube.com/watch?v=Lj2qRbHJzsc", "channel": "Squarepusher"}, {"title": "A Luxury Tokyo Hotel Room | Rain, Wind and Thunder sounds For Sleeping | 4K | 8Hrs", "url": "https://www.youtube.com/watch?v=hBGbt2CRDpA", "channel": "Ambient Renders"}, {"title": "Shobaleader One - Tetra Sync - Live at the Independent SF 12/17/2016", "url": "https://www.youtube.com/watch?v=lHTUQIbD1DI", "channel": "Cameron Scott Cairney"}, {"title": "Squarepusher - Squarepusher Theme (Official Audio)", "url": "https://www.youtube.com/watch?v=wiycAAoaK2k", "channel": "Squarepusher"}, {"title": "Datach'i - Healthy.Quiet.Terror (Official Video)", "url": "https://www.youtube.com/watch?v=vko1EqUdlRA", "channel": "Datach'i"}, {"title": "Jacob Collier, Lizzy Mcalpine, and dodie sing Time After Time", "url": "https://www.youtube.com/watch?v=to2TwTZyvC0", "channel": "Taco"}, {"title": "James Blake - You're Too Precious", "url": "https://www.youtube.com/watch?v=6WfY8wixwD8", "channel": "James Blake"}, {"title": "James Blake - If The Car Beside You Moves Ahead (Official Video)", "url": "https://www.youtube.com/watch?v=bYXM3uz1bjM", "channel": "James Blake"}, {"title": "This Panda Is Dancing - Time Well Spent", "url": "https://www.youtube.com/watch?v=tf9ZhU7zF8s", "channel": "Max Stossel"}, {"title": "Adam Sandler: 100% Fresh | Chris Farley Tribute [HD] | Netflix Is A Joke", "url": "https://www.youtube.com/watch?v=Tp2qkhHU0Mw", "channel": "Netflix Is A Joke"}, {"title": "Space Lofi Hip Hop Radio 24/7 🚀 Chill Lofi Beats To Study, Lofi Sleep Music 🚀 No Copyright Lofi", "url": "https://www.youtube.com/watch?v=zP2Pg4-a7gs", "channel": "lofi geek"}, {"title": "Fred again.. - Dermot (See Yourself In My Eyes)", "url": "https://www.youtube.com/watch?v=6QWS8mKq6us", "channel": "Fred again . ."}, {"title": "Fred again.. - Studio Live (London, April 2021)", "url": "https://www.youtube.com/watch?v=H2I6V0NlaHg", "channel": "Fred again . ."}, {"title": "Squarepusher - Theme From Ernest Borgnine (Official Audio)", "url": "https://www.youtube.com/watch?v=Mp0JLqc8oTQ", "channel": "Squarepusher"}, {"title": "PORTER ROBINSON NURTURE LIVE @ SECRET SKY 2021", "url": "https://www.youtube.com/watch?v=THjekE5p2aw", "channel": "Porter Robinson"}, {"title": "Porter Robinson - Blossom (Live at Secret Sky 2021 1080P)", "url": "https://www.youtube.com/watch?v=CUdtK3dKLIU", "channel": "Tom Lube"}, {"title": "East End Walk following W.G Sebald's Austerlitz (4K)", "url": "https://www.youtube.com/watch?v=IpEKUalZg8Q", "channel": "John Rogers"}, {"title": "Austerlitz", "url": "https://www.youtube.com/watch?v=9m00MoJecKg", "channel": "SOURCE Photographic Review"}, {"title": "W.G. Sebald Documentary", "url": "https://www.youtube.com/watch?v=En3VlxsAVgQ", "channel": "RedVeen"}, {"title": "追告 A『シン・エヴァンゲリオン劇場版』絶賛公開中", "url": "https://www.youtube.com/watch?v=L0f6m-8i660", "channel": "株式会社カラー khara inc.official"}, {"title": "James Blake - when the party's over (Billie Eilish Cover)", "url": "https://www.youtube.com/watch?v=0nyoME9Uims", "channel": "James Blake"}, {"title": "Utada Hikaru「Beautiful World」　Directed by Tsurumaki Kazuya", "url": "https://www.youtube.com/watch?v=jmKRgqWGrWc", "channel": "UNIVERSAL MUSIC JAPAN"}, {"title": "🔴🌏⭕🔵🌕📀🌍⚫💿🌎🐦🐧🐤🌎💿⚫🌍📀🌕🔵⭕🌏🔴", "url": "https://www.youtube.com/watch?v=Ty6m-tL5iQY", "channel": "Four Tet"}, {"title": "Michael Chabon Chats with Zadie Smith and Ira Glass", "url": "https://www.youtube.com/watch?v=e-Pjf8qylqg", "channel": "MacDowell"}, {"title": "The Critic's Voice: First Reads with James Wood | 92Y Readings", "url": "https://www.youtube.com/watch?v=zFiICNGiQVs", "channel": "The 92nd Street Y, New York"}, {"title": "James Wood, \"The Nearest Thing to Life\"", "url": "https://www.youtube.com/watch?v=7nVpb78uWMs", "channel": "Politics and Prose"}, {"title": "Why Evangelion's Horrible Ending is Actually Amazing", "url": "https://www.youtube.com/watch?v=0pG2PgxOmfw", "channel": "Dorkly"}, {"title": "Hania Rani – Live from Studio S2", "url": "https://www.youtube.com/watch?v=kFRdoYfZYUY", "channel": "Gondwana Records"}, {"title": "All 37 Evangelion Timelines Explained - Anime Explained", "url": "https://www.youtube.com/watch?v=ueUeMFbGq9o", "channel": "Crunchyroll: Inside Anime"}, {"title": "Slow Pulp - Full Performance (Live on KEXP at Home)", "url": "https://www.youtube.com/watch?v=PmU9vtEXBF4", "channel": "KEXP"}, {"title": "Mental Places: a conversation with Gerald Murnane", "url": "https://www.youtube.com/watch?v=5PqzX4TC1BE", "channel": "Giramondo Publishing"}, {"title": "Approaching Nibiru", "url": "https://www.youtube.com/watch?v=GnOAHtoARMY", "channel": "Tristan Baldi"}, {"title": "Víkingur Ólafsson – Rameau: Les Boréades: The Arts and the Hours (Transcr. Ólafsson)", "url": "https://www.youtube.com/watch?v=qTwqBVt2Clw", "channel": "Deutsche Grammophon - DG and Víkingur Ólafsson"}, {"title": "Mogwai - Performance & Interview (Live on KEXP at Home)", "url": "https://www.youtube.com/watch?v=eWnzxxaiyLc", "channel": "KEXP"}, {"title": "Mogwai - Ritchie Sacramento (6 Music Live Session)", "url": "https://www.youtube.com/watch?v=RGAJgKAKfL0", "channel": "BBC Radio 6 Music"}, {"title": "Disintegration Loop 1.1 (official)", "url": "https://www.youtube.com/watch?v=ObdZ8lhC0f0", "channel": "billy2062"}, {"title": "*every day the same* | melancholy fm trip hop | digitone/po32/moog/microcosm", "url": "https://www.youtube.com/watch?v=xLuhEz7XUTs", "channel": "raised ranch"}, {"title": "Enumclaw - Fast N All (Official Music Video)", "url": "https://www.youtube.com/watch?v=x_acAPULk38", "channel": "Enumclaw"}, {"title": "Daniel Kehlmann with Zadie Smith", "url": "https://www.youtube.com/watch?v=lNqxKt6xrPk", "channel": "The 92nd Street Y, New York"}, {"title": "City Arcade Newcastle On The 4th Of March, 2021 At 10:54am", "url": "https://www.youtube.com/watch?v=JRWoX3W-DjE", "channel": "Newcastle & The Hunter Valley, Now And Then On Film"}, {"title": "Ólafur Arnalds - A Sunrise Session with JFDR (some kind of peace)", "url": "https://www.youtube.com/watch?v=KrQV8nTCwqg", "channel": "Ólafur Arnalds"}, {"title": "aphex twin - vordhosbn. Living Room Session", "url": "https://www.youtube.com/watch?v=UGQpCV-6bMQ", "channel": "Cat East."}, {"title": "Aphex Twin - Vordhosbn (Hitori Tori drum improvisation)", "url": "https://www.youtube.com/watch?v=yatbYRzNwdM", "channel": "hitoritori"}, {"title": "Rural Ryugasaki adventures - toward the sunset・4K HDR", "url": "https://www.youtube.com/watch?v=HRQfSG3YTWc", "channel": "Rambalac"}, {"title": "Reading - 2009th Stated Meeting - Amy Hempel", "url": "https://www.youtube.com/watch?v=CXmCfnYFJFs", "channel": "American Academy of Arts & Sciences"}, {"title": "Living with the Dark Winters in Sweden | Midnight sun & Polar night", "url": "https://www.youtube.com/watch?v=3zTR4ayDG38", "channel": "Jonna Jinton"}, {"title": "Sunrise Walk Binaural Ocean Sounds Hilton Head Island with Calm Ocean Waves", "url": "https://www.youtube.com/watch?v=3cxyYOXiJss", "channel": "Nomadic Ambience"}, {"title": "Fast Marauder (Nanoloop FM)", "url": "https://www.youtube.com/watch?v=eMO5P_cxEK0", "channel": "Tristan Baldi"}, {"title": "Andrew Marr on causality - Noam Chomsky on Marr", "url": "https://www.youtube.com/watch?v=inQkjbcSDgo", "channel": "Matt Elliott"}, {"title": "This One Still Works", "url": "https://www.youtube.com/watch?v=OYbEzkdZrko", "channel": "waneella"}, {"title": "Horizon", "url": "https://www.youtube.com/watch?v=mWnpeOWdT7c", "channel": "waneella"}, {"title": "Lee Pardini - ETA (Live Trio)", "url": "https://www.youtube.com/watch?v=xxd6WSpDwm4", "channel": "GroundUP Music NYC"}, {"title": "R I D I N ' / Dreamy Chill Lofi / SP404 & Moog Grandmother", "url": "https://www.youtube.com/watch?v=4vTprKdduI0", "channel": "raised ranch"}, {"title": "*feels alright* weekend boom bap/swirling moog leads ;)", "url": "https://www.youtube.com/watch?v=vhGzgfO-fZo", "channel": "raised ranch"}, {"title": "Peter B. demonstrates Plum Butter | Ciat-Lonbarde", "url": "https://www.youtube.com/watch?v=A1vuzw9Stk8", "channel": "Synth Docs"}, {"title": "Moogzart - Saturday Night Jam - Live 09/01/2021 - Moog Mother32 / Moog DFAM", "url": "https://www.youtube.com/watch?v=-6JTw8f9mJw", "channel": "Milton Moura"}, {"title": "#Jamuary2021, Day 4, Pt 3", "url": "https://www.youtube.com/watch?v=rGsP3XTXz8w", "channel": "Beni Rose Music"}, {"title": "Werkstatt-01 | Hivemind", "url": "https://www.youtube.com/watch?v=wwyk-I0D1kY", "channel": "Moog Music"}, {"title": "Subsequent 25 | Chrome Sparks", "url": "https://www.youtube.com/watch?v=hp6McFTjmEk", "channel": "Moog Music"}, {"title": "Make Noise Telharmonic visualized with a laser", "url": "https://www.youtube.com/watch?v=OzXAAaeoqNI", "channel": "Afturmath"}, {"title": "Do You Love Me?", "url": "https://www.youtube.com/watch?v=fn3KWM1kuAw", "channel": "Boston Dynamics"}, {"title": "“Dance Machine II” | Moog Subharmonicon x DFAM x Mother-32 x Strymon BigSky |", "url": "https://www.youtube.com/watch?v=2qhIjRH9sXI", "channel": "Dion DeGennaro"}, {"title": "Danny MacAskill’s Wee Day Out", "url": "https://www.youtube.com/watch?v=K_7k3fnxPq0", "channel": "Red Bull"}, {"title": "AGRIPPA (A Book of the Dead): The Poem Running in Emulation", "url": "https://www.youtube.com/watch?v=41kZovcyHrU", "channel": "Matthew Kirschenbaum"}, {"title": "Mama kaNomthandazo ft. Molo Mhlobo Wam by Aubrey Qwana", "url": "https://www.youtube.com/watch?v=c3MxQK90f70", "channel": "The Joy Official Music"}, {"title": "Joe Marler: Finding The Words", "url": "https://www.youtube.com/watch?v=u2k6QjtKgA8", "channel": "Campaign Against Living Miserably"}, {"title": "P&P Live! Ben Lerner | THE TOPEKA SCHOOL with Ocean Vuong", "url": "https://www.youtube.com/watch?v=iMGyomTUD1g", "channel": "Politics and Prose"}, {"title": "Aphex Twin - aisatsana [102] (Arranged for 2 Guitars)", "url": "https://www.youtube.com/watch?v=py35boqC9wQ", "channel": "Mike Godette Music"}, {"title": "Aphex Twin - Petiatil Cx Htdui (Arranged for 2 Guitars)", "url": "https://www.youtube.com/watch?v=EQnv9B6uB2w", "channel": "Mike Godette Music"}, {"title": "Claravox Centennial | “Clair de Lune” Performed by Grégoire Blanc & Orane Donnadieu", "url": "https://www.youtube.com/watch?v=ZVue-QsxuzA", "channel": "Moog Music"}, {"title": "Tennyson Mashup [MIDIFighter 64]", "url": "https://www.youtube.com/watch?v=VRjklLozeKk", "channel": "Rishabh Rajan"}, {"title": "Pink Floyd - On the Run [Sequence on the Moog Mother 32]", "url": "https://www.youtube.com/watch?v=H_HwIn2DPv0", "channel": "Rishabh Rajan"}, {"title": "Moogzart - Heliosphan (Aphex Twin Cover) - Moog Mother 32 / Moog DFAM / Drumbrute Impact", "url": "https://www.youtube.com/watch?v=brGCpEssKOQ", "channel": "Milton Moura"}, {"title": "FINAL   SMARTAH Sense Eco   Dudley PS", "url": "https://www.youtube.com/watch?v=ko0v-ekjpPE", "channel": "Jason Horadam"}, {"title": "Building a MIDI Controller Using Arduino", "url": "https://www.youtube.com/watch?v=JZ5yPdoPooU", "channel": "Switch & Lever"}, {"title": "Malcolm Catto - Bubblefish Breaks", "url": "https://www.youtube.com/watch?v=m5fSGnL7mas", "channel": "Robert Paton"}, {"title": "Malcolm Catto - Bubblefish Breaks", "url": "https://www.youtube.com/watch?v=D2Tm8lib3aA", "channel": "Robert Paton"}, {"title": "David Foster Wallace - Conversation (San Francisco, 2004)", "url": "https://www.youtube.com/watch?v=mfjjSj9coA0", "channel": "sdeslimbes"}, {"title": "Bernard Radfar & William T. Vollmann", "url": "https://www.youtube.com/watch?v=FihP5wwEIh8", "channel": "Hammer Museum"}, {"title": "DJ Shadow Boiler Room London DJ set", "url": "https://www.youtube.com/watch?v=3ArSb3lCc28", "channel": "Boiler Room"}, {"title": "Distorted", "url": "https://www.youtube.com/watch?v=SUcQlt74UG8", "channel": "waneella"}, {"title": "TV On The Radio - Wolf Like Me ( Live on Letterman ) HD & in sync", "url": "https://www.youtube.com/watch?v=MxawVMQ02dc", "channel": "Carlos Cuevas"}, {"title": "奥土居美可　MACROSS7　MACROSS　HEART&SOUL　EMILIA with BASARA NEKKI　マクロス7　銀河がオレを呼んでいる!　 ハートアンドソウル から", "url": "https://www.youtube.com/watch?v=Mvug3rF--N8", "channel": "mica okudoi TV"}, {"title": "NIETZSCHE Explained: DAYBREAK - Thoughts on the Prejudices of Morality", "url": "https://www.youtube.com/watch?v=cOL2z7nuXdA", "channel": "Weltgeist"}, {"title": "Rare Turkish Anatolian Rock, Funk & Jazz", "url": "https://www.youtube.com/watch?v=9KiCt-7k8pg", "channel": "MAJ"}, {"title": "🌻9:00am : shiny morning time (Indie/Jazz)", "url": "https://www.youtube.com/watch?v=5t91-jd3gDE", "channel": "청각예술"}, {"title": "Miserere mei, Deus - Allegri - Tenebrae conducted by Nigel Short", "url": "https://www.youtube.com/watch?v=H3v9unphfi0", "channel": "Tenebrae Choir"}, {"title": "Japanese City-Pop, Synth Pop and Jazz Vinyl Set", "url": "https://www.youtube.com/watch?v=9ZqGjITub5c", "channel": "MAJ"}, {"title": "Guest Mix: Eastern European Ladies on Vinyl with Ladies on Records", "url": "https://www.youtube.com/watch?v=5Yk5An-hkQE", "channel": "MAJ"}, {"title": "funki porcini - purrfect", "url": "https://www.youtube.com/watch?v=-ebWfAw1eug", "channel": "smokerasta"}, {"title": "Funki Porcini STRANGE TALES", "url": "https://www.youtube.com/watch?v=FHlEZD83ZWk", "channel": "Funki Porcini"}, {"title": "Turkish Female Singers on Vinyl", "url": "https://www.youtube.com/watch?v=OIZ7-gY18io", "channel": "MAJ"}, {"title": "Evian Christ — Ultra", "url": "https://www.youtube.com/watch?v=qwIRY1dUYvA", "channel": "Evian Christ"}, {"title": "Thomas Bernhard - Three Days (1970)", "url": "https://www.youtube.com/watch?v=nSHmANet3Ag", "channel": "Among the Kipple"}, {"title": "One Man Orchestra - Mozart Symphony no  25 in G minor, K  183 Mov 1 Allegro con Brio", "url": "https://www.youtube.com/watch?v=C67V3x76AsM", "channel": "Gage Salnikowski"}, {"title": "THE ORCHID THIEF Author Susan Orlean Discusses ADAPTATION", "url": "https://www.youtube.com/watch?v=bUwrIeEB9-Y", "channel": "Anne Heller"}, {"title": "Žižek and So On - Sbriglia Speaks", "url": "https://www.youtube.com/watch?v=hjluCGAmZiM", "channel": "ŽIŽEK & SO ON PODCAST"}, {"title": "Baby Sea Otter Joey Live from his Nursery", "url": "https://www.youtube.com/watch?v=OjqyQr1Fa4g", "channel": "BC Marine Mammal Rescue Society"}, {"title": "Jamie Lidell Full Set | From The Basement", "url": "https://www.youtube.com/watch?v=NW-rskTv-kw", "channel": "From The Basement"}, {"title": "Slavoj Zizek: What Does the Future Hold? From the Singularity to Freud, Secret Lives to Wired Brains", "url": "https://www.youtube.com/watch?v=luSkpONb2d4", "channel": "How To Academy"}, {"title": "City Arts & Lectures presents Charlie Kaufman", "url": "https://www.youtube.com/watch?v=1nQ878EZqsM", "channel": "City Arts & Lectures"}, {"title": "Running 43km along a hidden railway line", "url": "https://www.youtube.com/watch?v=rxCghemtjjM", "channel": "Beau Miles"}, {"title": "Samuel Beckett: \"The Kindest Man in the World\" (1989)", "url": "https://www.youtube.com/watch?v=pDwvyzSadRM", "channel": "Manufacturing Intellect"}, {"title": "Badly Drawn Boy - You And Me Against The World (Live)", "url": "https://www.youtube.com/watch?v=OFvapYxtnf8", "channel": "Badly Drawn Boy"}, {"title": "Worstward, Ho! by Samuel Beckett", "url": "https://www.youtube.com/watch?v=eFFljMPudhg", "channel": "A Poetry Channel"}, {"title": "Ólafur Arnalds - Island Songs (full film)", "url": "https://www.youtube.com/watch?v=Md2CtjOPrIU", "channel": "Ólafur Arnalds"}, {"title": "Wax or the DIscovery of Television Among the Bees [85:00, 1991]", "url": "https://www.youtube.com/watch?v=Aq1PV8JcstA", "channel": "The First Movie On The Internet"}, {"title": "Slavoj Žižek: “People are totally disoriented. This is the moment of philosophy.” Interview 15.7.20", "url": "https://www.youtube.com/watch?v=mGocRm5eA9U", "channel": "Renitzc Kantart"}, {"title": "David Markson Reads at the 92nd Street Y", "url": "https://www.youtube.com/watch?v=6o5NUGt78SA", "channel": "The 92nd Street Y, New York"}, {"title": "John Clarke: Thanks for your time.", "url": "https://www.youtube.com/watch?v=539bkrv7g2k", "channel": "ClarkeAndDawe"}, {"title": "William Lutz - Doublespeak", "url": "https://www.youtube.com/watch?v=Fub8PsNxBqI", "channel": "Keith B"}, {"title": "EXCLUSIVE: Gorillaz Street Performance of \"On Melancholy Hill\"", "url": "https://www.youtube.com/watch?v=F_NB4BQy8Ng", "channel": "Audacy"}, {"title": "LCD Soundsystem - All My Friends (Glastonbury 2016)", "url": "https://www.youtube.com/watch?v=ObvLGOE-_Qk", "channel": "BBC Music"}, {"title": "This Is Modern Art   1 of 6   I Am a Genius   1999", "url": "https://www.youtube.com/watch?v=ZpVrMNeLogo", "channel": "方偉文"}, {"title": "Mogwai - Burning", "url": "https://www.youtube.com/watch?v=ZgYiQPuXMhE", "channel": "SoundBankOfTheYear"}, {"title": "James Blake - Come As You Are (Nirvana Cover)", "url": "https://www.youtube.com/watch?v=GpX3_UA81TM", "channel": "James Blake"}, {"title": "‘Supersize Your Soul: The Story of Banana Skin Shoes’", "url": "https://www.youtube.com/watch?v=nOFLeLLeKy4", "channel": "Badly Drawn Boy"}, {"title": "Badly Drawn Boy - I Just Wanna Wish You Happiness (Live Session)", "url": "https://www.youtube.com/watch?v=HtvuK9_G-lc", "channel": "Badly Drawn Boy"}, {"title": "Badly Drawn Boy - I'll Do My Best (Live)", "url": "https://www.youtube.com/watch?v=VPDs9vfbzpc", "channel": "Badly Drawn Boy"}, {"title": "Marble Race: Marble League 2019 Qualifiers", "url": "https://www.youtube.com/watch?v=O2AbcCbyJ2U", "channel": "Jelle's Marble Runs"}, {"title": "Fossil Funk Piano Mix (Live Studio Version)", "url": "https://www.youtube.com/watch?v=CBqQlubSLXs", "channel": "ceephax"}, {"title": "Ceephax Acid Crew live at Intercell Outdoor 2019", "url": "https://www.youtube.com/watch?v=nYEw7tu89wY", "channel": "ceephax"}, {"title": "\"What's the secret to still dancing at 106?\"", "url": "https://www.youtube.com/watch?v=vSlWDlXCelk", "channel": "The Obama White House"}, {"title": "Toro y Moi - Live from Trona", "url": "https://www.youtube.com/watch?v=scgsHJp8mWU", "channel": "Toro y Moi and PrimaryColorsStudio"}, {"title": "Dave Brubeck - Golden Brown", "url": "https://www.youtube.com/watch?v=2Qs1J612nZs", "channel": "Laurence Mason"}, {"title": "Charlie Kaufman | BAFTA Screenwriters’ Lecture Series", "url": "https://www.youtube.com/watch?v=eRfXcWT_oFs", "channel": "BAFTA Guru"}, {"title": "Jamie XX feat Romy & Olivier - Stranger in a room & SeeSaw @BBCR1", "url": "https://www.youtube.com/watch?v=6jqKUWf-x9Y", "channel": "grzadziel"}, {"title": "Great Gardens: Las Pozas, Mexico", "url": "https://www.youtube.com/watch?v=BLcsOeiadls", "channel": "NOWNESS"}, {"title": "For Love (I Come Your Friend)/Daylight | Thundercat | From The Basement", "url": "https://www.youtube.com/watch?v=NMIyG4Ch0_M", "channel": "From The Basement"}, {"title": "Your Only Doll (Dora) | Laura Marling | From The Basement", "url": "https://www.youtube.com/watch?v=4zSZIVId5eo", "channel": "From The Basement"}, {"title": "Amazing flights with birds on board of a microlight. Christian Moullec avec ses oiseaux", "url": "https://www.youtube.com/watch?v=owiwCIhc0I0", "channel": "Voler Avec les Oiseaux"}, {"title": "Kevin Shields of My Bloody Valentine - Part 1: Obsession | Jazzmaster 60th Anniversary | Fender", "url": "https://www.youtube.com/watch?v=qd1Xmr2YY7c", "channel": "Fender"}, {"title": "Radiohead - Live at Bonnaroo (June 2006)", "url": "https://www.youtube.com/watch?v=1hgXZAHonLs", "channel": "Radiohead"}, {"title": "Sigur Rós - Route One [Part 1 - 1080p]", "url": "https://www.youtube.com/watch?v=G54tllj-SKI", "channel": "Sigur Rós"}, {"title": "Squarepusher - Detroit People Mover (Official Video)", "url": "https://www.youtube.com/watch?v=RBbQWgoJHOM", "channel": "Squarepusher"}, {"title": "Squarepusher, Jamie Lidell and Guthrie long jam at P '99", "url": "https://www.youtube.com/watch?v=6jWWG2UhWy4", "channel": "Pablo Fiasco"}, {"title": "Week 7", "url": "https://www.youtube.com/watch?v=pdsXZoyJil0", "channel": "Geoff De Iuliis"}, {"title": "You Won't Believe This Is In Italy 4k", "url": "https://www.youtube.com/watch?v=XHeDps0fX6c", "channel": "Bashir Abu Shakra"}, {"title": "02:14", "url": "https://www.youtube.com/watch?v=lRsMLyGG81o", "channel": "waneella"}, {"title": "Squarepusher - Midi Sans Frontieres (Avec Batterie)", "url": "https://www.youtube.com/watch?v=X_k2lih0T6U", "channel": "Squarepusher"}, {"title": "Japanese Funk and Soul on Vinyl (late 70's, early 80's)", "url": "https://www.youtube.com/watch?v=TEXZSzPpZqo", "channel": "MAJ"}, {"title": "Nicholas Brothers in Stormy Weather", "url": "https://www.youtube.com/watch?v=zBb9hTyLjfM", "channel": "TapZatNYC"}, {"title": "Ben Lerner: No Art | Poetry, fiction, criticism, fiction, poetry", "url": "https://www.youtube.com/watch?v=8PGkC6e855Q", "channel": "Foyles"}, {"title": "John Ashbery reads \"Commotion of the Birds\" in his Hudson Home, Saturday 17 June, 2017", "url": "https://www.youtube.com/watch?v=XOwKN4ndHDM", "channel": "doublechange readings"}, {"title": "Snarky Puppy - Lingus (We Like It Here)", "url": "https://www.youtube.com/watch?v=L_XJ_s5IsQc", "channel": "GroundUP Music NYC"}, {"title": "Teju Cole on Open City - The John Adams Institute", "url": "https://www.youtube.com/watch?v=CySelcG7C30", "channel": "The John Adams Institute"}, {"title": "Bonnie \"Prince\" Billy - I See A Darkness (Live on KEXP)", "url": "https://www.youtube.com/watch?v=5mpo9UYl_Yw", "channel": "KEXP"}, {"title": "Alexis Taylor - White Wine And Fried Chicken", "url": "https://www.youtube.com/watch?v=7eQfMW1FxuY", "channel": "Daylight Music"}, {"title": "Slavoj Zizek Interview on his book \"Sex and the Failed Absolute\"", "url": "https://www.youtube.com/watch?v=UiwTFkcFGv0", "channel": "Zer0 Books and Repeater Media"}, {"title": "Don DeLillo & Terry Gross & Underworld/part 3", "url": "https://www.youtube.com/watch?v=FSyRbFWoqUo", "channel": "donologist"}, {"title": "Mas Bokus - Theme From Ernest Borgnine (Squarepusher Cover)", "url": "https://www.youtube.com/watch?v=dAfsx2nnBRE", "channel": "Mas Bokus"}, {"title": "lofi hip hop radio - beats to relax/study to", "url": "https://www.youtube.com/watch?v=hHW1oY26kxQ", "channel": "Lofi Girl"}, {"title": "Squarepusher - Vortrack [Fracture Remix] (Official Audio)", "url": "https://www.youtube.com/watch?v=59ke5hp-p3E", "channel": "Squarepusher"}, {"title": "EPPUR SI MUOVE / ŽIŽEKIAN MASTERCLASS (3)", "url": "https://www.youtube.com/watch?v=KVs3G7Ev5aA", "channel": "Philosophy Portal"}, {"title": "Intro to German Idealism (1/2)", "url": "https://www.youtube.com/watch?v=uOgnlSUuYjI", "channel": "Footnotes2Plato"}, {"title": "Zizek: \"The Parallax of Ontology. Reality and Its Transcendental Supplement\"", "url": "https://www.youtube.com/watch?v=DcQJYXYGSPk", "channel": "Dominik Finkelde - Hochschule f. Philosophie"}, {"title": "Poem Present: Ben Lerner Reading", "url": "https://www.youtube.com/watch?v=65Vbn8vl9YE", "channel": "The University of Chicago"}, {"title": "Mary Halvorson, Guitarist and Composer | 2019 MacArthur Fellow", "url": "https://www.youtube.com/watch?v=75ae29wPTDs", "channel": "macfound"}, {"title": "Slavoj Žižek - On G.W.F. Hegel", "url": "https://www.youtube.com/watch?v=2rzMkvf1Ess", "channel": "Intellectual Deep Web"}, {"title": "PS22 Chorus 2020 \"Idioteque\" Radiohead", "url": "https://www.youtube.com/watch?v=jaDSngdKzEM", "channel": "PS22 Chorus"}, {"title": "What Is Žižek For?  A Response to Current Affairs article by Moller-Nielsen", "url": "https://www.youtube.com/watch?v=oDO-jMaFpY8", "channel": "Philosophy Portal"}, {"title": "Diagram of Hegel's Phenomenology of Spirit", "url": "https://www.youtube.com/watch?v=9Z1zY39EKbs", "channel": "Footnotes2Plato"}, {"title": "Radiohead – Codex | Josh Cohen (Solo Piano)", "url": "https://www.youtube.com/watch?v=ddRaykO__bA", "channel": "Josh Cohen"}, {"title": "Lunch Poems - Ben Lerner", "url": "https://www.youtube.com/watch?v=KUEDl-AS-7U", "channel": "UC Berkeley Events"}, {"title": "Aphex Twin - Soundlab20", "url": "https://www.youtube.com/watch?v=k9iBbCvJu3Q", "channel": "[HAMAD]"}, {"title": "Slavoj Zizek - The Antinomies in Kant, Hegel, Lacan, Adorno, & Levi Strauss", "url": "https://www.youtube.com/watch?v=F6FVlztxcU4", "channel": "Ben The Benevolent"}, {"title": "words fail rough 1", "url": "https://www.youtube.com/watch?v=Y8j9qvToNjQ", "channel": "Heath Wild"}, {"title": "Slavoj Žižek Sex and the Failed Absolute", "url": "https://www.youtube.com/watch?v=PmYQIld9BdA", "channel": "EMANCIPATION IS COMMUNISM"}, {"title": "Forgotten Thinkers: Walter Kaufmann", "url": "https://www.youtube.com/watch?v=p2MOvP9AwWk", "channel": "Wes Cecil"}, {"title": "Inclusive education: a way to think differently about difference | Peter Walker | TEDxAdelaide", "url": "https://www.youtube.com/watch?v=FolCetXtYG0", "channel": "TEDx Talks"}, {"title": "Julia Jacklin \"Eastwick\" Live - Sideshow Alley", "url": "https://www.youtube.com/watch?v=MnjxxhOC2a4", "channel": "SideshowAlleyTV"}, {"title": "BO2K Presentation Behind-the-Scenes", "url": "https://www.youtube.com/watch?v=oHxNEvklKqE", "channel": "cultdeadcow"}, {"title": "Martha Nussbaum, \"Creating Capabilities: The Human Development Approach\"", "url": "https://www.youtube.com/watch?v=sYfFGDhbHUk", "channel": "University of Chicago Law School"}, {"title": "A New Intro to Zero Books at 50k: Re-Thinking Critical Theory with Guy Debord", "url": "https://www.youtube.com/watch?v=SADS3xa4apk", "channel": "Zer0 Books and Repeater Media"}, {"title": "Slavoj Žižek’s Less Than Nothing: Introduction - Eppur Si Muove", "url": "https://www.youtube.com/watch?v=66xf_j3_9vI", "channel": "Philosophy Portal"}, {"title": "The Way That I Go", "url": "https://www.youtube.com/watch?v=N9gshlo8sEU", "channel": "Craig Smith"}, {"title": "Album Review: \"Anoyo\", Tim Hecker", "url": "https://www.youtube.com/watch?v=3k1S5erhMVw", "channel": "thesoundbinge"}, {"title": "Don DeLillo on Underworld - The John Adams Institute", "url": "https://www.youtube.com/watch?v=h01xhRxSJZ0", "channel": "The John Adams Institute"}, {"title": "Poet Donald Hall:  ‘Old Age Is a Ceremony of Losses’", "url": "https://www.youtube.com/watch?v=KnOMNeMPWH0", "channel": "The Atlantic"}, {"title": "Evaluating the Žižek vs. Peterson Debate", "url": "https://www.youtube.com/watch?v=xfapDkint3E", "channel": "Zer0 Books and Repeater Media"}, {"title": "Legendary Werner Herzog talks books with author Robert Pogue Harrison: full-length version", "url": "https://www.youtube.com/watch?v=n4b7vBWwbuo", "channel": "Stanford"}, {"title": "Andy Wimbush: Samuel Beckett and Quietism", "url": "https://www.youtube.com/watch?v=rieUPuakUq4", "channel": "CRASSH Cambridge"}, {"title": "Al Taqwa College - Hear in My Shoes", "url": "https://www.youtube.com/watch?v=LUR4OHyr7vA", "channel": "Focus on Ability Film Festival"}, {"title": "Toro y Moi - Campo - Live in San Francisco", "url": "https://www.youtube.com/watch?v=3N-P_d6SZQg", "channel": "AdmiralNeeda"}, {"title": "Michael Silverblatt on his love of reading", "url": "https://www.youtube.com/watch?v=0SfWDUzXlNw", "channel": "Electric Cereal"}, {"title": "Thomas Bernhard - Frost - Book Review", "url": "https://www.youtube.com/watch?v=uWKxXZahhms", "channel": "PaperBird"}, {"title": "The Still Breathing Author - Gerald Murnane", "url": "https://www.youtube.com/watch?v=2qOUsQaYLUs", "channel": "The Writing and Society Research Centre"}, {"title": "2018 Chicago Tribune Heartland Prize for Fiction | George Saunders", "url": "https://www.youtube.com/watch?v=cnDgC5NwMXY", "channel": "Chicago Humanities"}, {"title": "David Shields: \"The Novel Is Dead; Long Live the Anti-Novel\"", "url": "https://www.youtube.com/watch?v=zswYXxETUvg", "channel": "Simpson Center"}, {"title": "Frank Ocean Type Beat - 3AM (ft. Oh Wonder) || SAD LOFI TYPE BEAT", "url": "https://www.youtube.com/watch?v=5M90wm-2f6g", "channel": "Ocean Beats"}, {"title": "Mira Calix - rightclick", "url": "https://www.youtube.com/watch?v=w1mZWs1Neis", "channel": "Warp Records"}, {"title": "Radical Markets: Fireside Chat: Glen Weyl and Jaron Lanier", "url": "https://www.youtube.com/watch?v=R4XBAwKInig", "channel": "San Francisco Blockchain Week"}, {"title": "Episode 15 Autism Pedagogy with Craig Smith", "url": "https://www.youtube.com/watch?v=A-zdoKFOhFg", "channel": "The Staffroom"}, {"title": "Hush Little Baby ~ Rose and Luke.", "url": "https://www.youtube.com/watch?v=Eoqwx-wPb6s", "channel": "Lu Quade"}, {"title": "Will Self, \"Phone\"", "url": "https://www.youtube.com/watch?v=c1YRW7E_af8", "channel": "Politics and Prose"}, {"title": "iPad and Autism Webinar - Recording", "url": "https://www.youtube.com/watch?v=bYMA3EJcNJ0", "channel": "Positive Partnerships"}, {"title": "CHOKER - A Chess-Poker Hybrid by Jason Rohrer", "url": "https://www.youtube.com/watch?v=BYzDQIyCefk", "channel": "Jason Rohrer"}, {"title": "Vaporwave / Chillwave - Ultimate Mix", "url": "https://www.youtube.com/watch?v=SolEjKrcg4E", "channel": "EGT Media"}, {"title": "lofi hip hop radio 🎅 chill study/relax beats", "url": "https://www.youtube.com/watch?v=LsBrT6vbQa8", "channel": "Chillhop Music"}, {"title": "Open Paws", "url": "https://www.youtube.com/watch?v=ITIcE92rCPs", "channel": "Taiyo"}];
+
+const TAG_DEFS = {
+  'Music': {
+    color: 'var(--tag-music)',
+    channels: ['KEXP','Boiler Room','NPR Music','BBC Music','From The Basement','Fred again','James Blake','Badly Drawn Boy','Squarepusher','Anna Meredith','Portishead','Gorillaz','Radiohead','Men I Trust','Funki Porcini','Moog Music','BINKBEATS','Retropical Records','Lera Lynn','JackStauber','Sunbiirds','Open Reel Ensemble','raised ranch','Warp Records','Flying Lotus','Craig Finn','stroom tv'],
+    keywords: ['official video','music video','live at','live on kexp','full album','album','concert','acoustic','live session','remix','EP]','LP]','LP [','Vol.','song','band','feat.','ft.','vocal','guitar','piano','synth','synthesizer','bass','drums','beats','anthem','orchestra','choir','opera','DJ set','vinyl','record','cover song','singing','performed by','music from','karaoke','playlist','lofi','lo-fi','chill radio','sega lofi','lo fi','vaporwave','chillhop','ambient','downtempo','mixtape','Adagio','Wrenasmir','Telegraph']
+  },
+  'Mix / DJ Set': {
+    color: 'var(--tag-mix)',
+    channels: ['Boiler Room','Dopo Goto','Медиус','Lofi Zen','TOKYO TONES'],
+    keywords: ['mix','DJ set','radio 24/7','jungle mix','lofi','ambient mix','chill radio','24/7','Ambient Jungle','focus mix','brutalist ambience','2-hour']
+  },
+  'Documentary': {
+    color: 'var(--tag-documentary)',
+    channels: ['Manufacturing Intellect','Gravitas Documentaries','BBC Archive','British Pathé','Kinolibrary','NFSA Film Australia','Non-Corporate News','cultdeadcow'],
+    keywords: ['documentary','DOCUMENTARY','interview','full length interview','full interview','conversation with','talks about','requiem','manufacturing consent','firing line','demoscene']
+  },
+  'Writing / Literature': {
+    color: 'var(--tag-writing)',
+    channels: ['London Review of Books (LRB)','Politics and Prose','The World Literature Podcast','PaperBird','Zer0 Books and Repeater Media','The Poetry Shack','Brown University'],
+    keywords: ['book review','poetry','writing','literary','novel','literature','author','fiction','nonfiction','reading','manuscript','prose','poem','poet','writer','publisher','bookshop','Gerald Murnane','Will Self','Robert Frost','David Shields','Aphantasia','Hunter S. Thompson']
+  },
+  'Art': {
+    color: 'var(--tag-art)',
+    channels: ['Whitechapel Gallery','waneella','MongKencO','Tristan Baldi','Electric Cereal','Login.jp_','Nick Kanozik','Artiom Constantinov'],
+    keywords: ['art','visual','gallery','pixel art','animation','generative','creative coding','sculpture','painting','illustration','visualizer','reactive visuals','pure data','audio reactive']
+  },
+  'Film': {
+    color: 'var(--tag-film)',
+    channels: ['Binge Society','Funky Donuts','Alt Copperpot5'],
+    keywords: ['full scene','movie','cinema','film','Pulp Fiction','Kubrick','Spielberg','Lynch','Tarantino','feature film']
+  },
+  'Gaming': {
+    color: 'var(--tag-gaming)',
+    channels: ['GameTrailers','TurboToyTime','ARSHIV'],
+    keywords: ['gameplay','game','gaming','playstation','xbox','nintendo','steam','indie game','retro game','speedrun','walkthrough','trailer']
+  },
+  'Tech': {
+    color: 'var(--tag-tech)',
+    channels: ['Superhumans','The_Changing_State'],
+    keywords: ['tech','programming','coding','software','hardware','AI ','artificial intelligence','machine learning','computer','virtual reality','VR ','hacker','algorithm','startup','Jaron Lanier','silicon valley','demoscene']
+  },
+  'Comedy': {
+    color: 'var(--tag-comedy)',
+    channels: ['Jimmy Kimmel Live','Letterman','The Howard Stern Show','Funny Or Die','Tim Heidecker','Almost Friday TV','VT16','Anything Can Be A Podcast'],
+    keywords: ['comedy','funny','hilarious','stand-up','standup','comedian','prank','sketch','parody','Steamed Hams','mental breakdown','skit','colbert','stern show']
+  },
+  'Education': {
+    color: 'var(--tag-education)',
+    channels: ['TEDx Talks','The School of Life','The 92nd Street Y, New York','Philosophy Portal','Communication Spectrum','Neurodivergent Mates','Brown University','Bundeskanzler-Willy-Brandt-Sti'],
+    keywords: ['TEDx','TED talk','lecture','education','learning','tutorial','neurodivergent','autism','ADHD','strengths-based','UDL','universal design','classroom','school','teaching','pedagogy','professional learning','webinar']
+  },
+  'Local / Newcastle': {
+    color: 'var(--tag-local)',
+    channels: ['Newcastle & The Hunter Valley, Now And Then On Film','Frank Watkinson','UoNCC'],
+    keywords: ['Newcastle','Hunter Valley','Nobbys','Merewether','Stockton','Cooks Hill','Darby St','Beaumont St','Hamilton','Islington','Wickham','Honeysuckle','Australia c.']
+  },
+  'Podcast / Talk': {
+    color: 'var(--tag-podcast)',
+    channels: ['The Origins Podcast','PoliticsJOE','The Atlantic','The New York Times','Channel 4 News','View Escape','Exploring the Unbeaten Path'],
+    keywords: ['podcast','episode','Noam Chomsky','freedom of speech','Letterman on','future of']
+  },
+  'News / Politics': {
+    color: 'var(--tag-news)',
+    channels: ['Channel 4 News','PoliticsJOE','The Atlantic','The New York Times','Non-Corporate News'],
+    keywords: ['politics','election','protest','Palestine','government','democracy','free speech','Chomsky','Buckley','campaign trail']
+  },
+  'Kids': {
+    color: 'var(--tag-kids)',
+    channels: ['mocha.'],
+    keywords: ['kids','children','puppy','BATTLE ROBOTS','Rock-Em Sock-Em']
+  },
+  'Anime': {
+    color: 'var(--tag-anime)',
+    channels: ['株式会社カラー khara inc.official'],
+    keywords: ['anime','エヴァンゲリオン','evangelion','manga','studio ghibli','miyazaki']
+  },
+  'Own Work': {
+    color: 'var(--tag-own)',
+    channels: ['Craig Smith'],
+    keywords: []
+  }
+};
+
+const TAG_ORDER = ['Music','Mix / DJ Set','Documentary','Writing / Literature','Art','Film','Comedy','Education','Tech','Gaming','Local / Newcastle','Podcast / Talk','News / Politics','Anime','Kids','Own Work','Uncategorized'];
+
+// State
+let videos = [];
+let activeTags = new Set();
+let searchQuery = '';
+let currentView = 'grid';
+let tagOverrides = {};
+let editingVideoId = null;
+let editingTags = new Set();
+
+function getVideoId(url) {
+  const m = url.match(/[?&]v=([^&]+)/);
+  return m ? m[1] : '';
+}
+
+function autoTag(video) {
+  const tags = new Set();
+  const title = video.title || '';
+  const channel = video.channel || '';
+  const titleLower = title.toLowerCase();
+  const channelLower = channel.toLowerCase();
+
+  for (const [tag, def] of Object.entries(TAG_DEFS)) {
+    // Check channel match
+    for (const ch of def.channels) {
+      if (channelLower.includes(ch.toLowerCase())) {
+        tags.add(tag);
+        break;
+      }
+    }
+    // Check keyword match
+    for (const kw of def.keywords) {
+      if (titleLower.includes(kw.toLowerCase()) || channelLower.includes(kw.toLowerCase())) {
+        tags.add(tag);
+        break;
+      }
+    }
+  }
+
+  if (tags.size === 0) tags.add('Uncategorized');
+  return [...tags];
+}
+
+function loadOverrides() {
+  try {
+    const saved = localStorage.getItem('yt-liked-tag-overrides');
+    if (saved) tagOverrides = JSON.parse(saved);
+  } catch(e) {}
+}
+
+function saveOverrides() {
+  localStorage.setItem('yt-liked-tag-overrides', JSON.stringify(tagOverrides));
+}
+
+function getVideoTags(video) {
+  const vid = getVideoId(video.url);
+  if (tagOverrides[vid]) return tagOverrides[vid];
+  return autoTag(video);
+}
+
+function init() {
+  loadOverrides();
+  videos = LIKED_VIDEOS.map((v, i) => ({
+    ...v,
+    id: getVideoId(v.url),
+    index: i
+  }));
+  buildTagBar();
+  render();
+
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    searchQuery = e.target.value.toLowerCase();
+    render();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closePlayer();
+      closeTagEditor();
+    }
+  });
+}
+
+function buildTagBar() {
+  const tagCounts = {};
+  TAG_ORDER.forEach(t => tagCounts[t] = 0);
+
+  videos.forEach(v => {
+    getVideoTags(v).forEach(t => {
+      tagCounts[t] = (tagCounts[t] || 0) + 1;
+    });
+  });
+
+  const bar = document.getElementById('tagBar');
+  bar.innerHTML = '';
+
+  const allBtn = document.createElement('button');
+  allBtn.className = 'tag-pill active';
+  allBtn.dataset.tag = '__all';
+  allBtn.innerHTML = 'All <span class="count">' + videos.length + '</span>';
+  allBtn.addEventListener('click', () => toggleTag('__all'));
+  bar.appendChild(allBtn);
+
+  TAG_ORDER.forEach(tag => {
+    if (tagCounts[tag] > 0) {
+      const colorVar = TAG_DEFS[tag] ? TAG_DEFS[tag].color : 'var(--tag-uncategorized)';
+      const btn = document.createElement('button');
+      btn.className = 'tag-pill';
+      btn.dataset.tag = tag;
+      btn.style.setProperty('--tag-color', colorVar);
+      btn.innerHTML = tag + ' <span class="count">' + tagCounts[tag] + '</span>';
+      btn.addEventListener('click', () => toggleTag(tag));
+      bar.appendChild(btn);
+    }
+  });
+}
+
+function toggleTag(tag) {
+  if (tag === '__all') {
+    activeTags.clear();
+  } else {
+    if (activeTags.has(tag)) {
+      activeTags.delete(tag);
+    } else {
+      activeTags.add(tag);
+    }
+  }
+  updateTagPills();
+  render();
+}
+
+function updateTagPills() {
+  document.querySelectorAll('.tag-pill').forEach(pill => {
+    const t = pill.dataset.tag;
+    if (t === '__all') {
+      pill.classList.toggle('active', activeTags.size === 0);
+    } else {
+      pill.classList.toggle('active', activeTags.has(t));
+    }
+  });
+}
+
+function getFilteredVideos() {
+  return videos.filter(v => {
+    // Tag filter
+    if (activeTags.size > 0) {
+      const vTags = getVideoTags(v);
+      if (!vTags.some(t => activeTags.has(t))) return false;
+    }
+    // Search filter
+    if (searchQuery) {
+      const haystack = (v.title + ' ' + v.channel).toLowerCase();
+      const terms = searchQuery.split(/\s+/);
+      if (!terms.every(term => haystack.includes(term))) return false;
+    }
+    return true;
+  });
+}
+
+function render() {
+  const filtered = getFilteredVideos();
+  const grid = document.getElementById('videoGrid');
+  const info = document.getElementById('resultsInfo');
+  const count = document.getElementById('resultCount');
+
+  count.textContent = filtered.length + ' of ' + videos.length + ' videos';
+  info.innerHTML = activeTags.size > 0 || searchQuery
+    ? '<strong>' + filtered.length + '</strong> videos matching your filters'
+    : '<strong>' + videos.length + '</strong> liked videos in your library';
+
+  grid.innerHTML = '';
+  const fragment = document.createDocumentFragment();
+
+  filtered.forEach((v, i) => {
+    const tags = getVideoTags(v);
+    const thumbUrl = 'https://img.youtube.com/vi/' + v.id + '/mqdefault.jpg';
+    const delay = Math.min(i * 0.02, 0.5);
+
+    const card = document.createElement('div');
+    card.className = 'video-card';
+    card.style.animationDelay = delay + 's';
+    card.addEventListener('click', () => openPlayer(v.id));
+
+    const thumbWrap = document.createElement('div');
+    thumbWrap.className = 'thumb-wrap';
+    const img = document.createElement('img');
+    img.src = thumbUrl;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.onerror = function() {
+      this.parentNode.innerHTML = '<div class="thumb-error">Unavailable</div>';
+    };
+    thumbWrap.appendChild(img);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'play-overlay';
+    overlay.innerHTML = '<div class="play-btn-icon"><svg viewBox="0 0 24 24"><polygon points="8,5 19,12 8,19"/></svg></div>';
+    thumbWrap.appendChild(overlay);
+    card.appendChild(thumbWrap);
+
+    const cardInfo = document.createElement('div');
+    cardInfo.className = 'card-info';
+
+    const title = document.createElement('div');
+    title.className = 'card-title';
+    title.textContent = v.title;
+    cardInfo.appendChild(title);
+
+    const channel = document.createElement('div');
+    channel.className = 'card-channel';
+    channel.textContent = v.channel;
+    cardInfo.appendChild(channel);
+
+    const tagsDiv = document.createElement('div');
+    tagsDiv.className = 'card-tags';
+    tags.forEach(t => {
+      const color = TAG_DEFS[t] ? TAG_DEFS[t].color : 'var(--tag-uncategorized)';
+      const tagSpan = document.createElement('span');
+      tagSpan.className = 'card-tag';
+      tagSpan.style.setProperty('--tag-color', color);
+      tagSpan.textContent = t;
+      tagsDiv.appendChild(tagSpan);
+    });
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'edit-tags-btn';
+    editBtn.title = 'Edit tags';
+    editBtn.innerHTML = '&#9998;';
+    editBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openTagEditor(v.id);
+    });
+    tagsDiv.appendChild(editBtn);
+
+    cardInfo.appendChild(tagsDiv);
+    card.appendChild(cardInfo);
+    fragment.appendChild(card);
+  });
+
+  grid.appendChild(fragment);
+}
+
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function openPlayer(videoId) {
+  window.open('https://www.youtube.com/watch?v=' + videoId, '_blank');
+}
+
+function closePlayer() {
+  const modal = document.getElementById('playerModal');
+  modal.classList.remove('open');
+  document.getElementById('modalVideo').innerHTML = '';
+  document.body.style.overflow = '';
+}
+
+function openTagEditor(videoId) {
+  const video = videos.find(v => v.id === videoId);
+  if (!video) return;
+  editingVideoId = videoId;
+  editingTags = new Set(getVideoTags(video));
+
+  document.getElementById('teSubtitle').textContent = video.title;
+
+  const container = document.getElementById('teTags');
+  container.innerHTML = '';
+  TAG_ORDER.forEach(tag => {
+    if (tag === 'Uncategorized') return;
+    const color = TAG_DEFS[tag] ? TAG_DEFS[tag].color : 'var(--tag-uncategorized)';
+    const btn = document.createElement('button');
+    btn.className = 'te-tag' + (editingTags.has(tag) ? ' selected' : '');
+    btn.style.setProperty('--tag-color', color);
+    btn.textContent = tag;
+    btn.addEventListener('click', () => {
+      if (editingTags.has(tag)) {
+        editingTags.delete(tag);
+        btn.classList.remove('selected');
+      } else {
+        editingTags.add(tag);
+        btn.classList.add('selected');
+      }
+    });
+    container.appendChild(btn);
+  });
+  document.getElementById('tagEditorOverlay').classList.add('open');
+}
+
+function closeTagEditor() {
+  document.getElementById('tagEditorOverlay').classList.remove('open');
+  editingVideoId = null;
+}
+
+function toggleEditTag(btn, tag) {
+  if (editingTags.has(tag)) {
+    editingTags.delete(tag);
+    btn.classList.remove('selected');
+  } else {
+    editingTags.add(tag);
+    btn.classList.add('selected');
+  }
+}
+
+function saveTagEdits() {
+  if (!editingVideoId) return;
+  const tags = [...editingTags];
+  if (tags.length === 0) tags.push('Uncategorized');
+  tagOverrides[editingVideoId] = tags;
+  saveOverrides();
+  closeTagEditor();
+  buildTagBar();
+  render();
+}
+
+function setView(view) {
+  currentView = view;
+  const grid = document.getElementById('videoGrid');
+  grid.classList.toggle('list-view', view === 'list');
+  document.getElementById('gridViewBtn').classList.toggle('active', view === 'grid');
+  document.getElementById('listViewBtn').classList.toggle('active', view === 'list');
+}
+
+init();
+</script>
+</body>
+</html>
